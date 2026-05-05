@@ -1,0 +1,280 @@
+.recuperar-page {
+  min-height: 100vh;
+  display: flex;
+  background: #ffffff;
+}
+
+.recuperar-left-panel {
+  width: 50%;
+  min-height: 100vh;
+  background: #f7f7f7;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 40px 36px;
+  border-right: 1px solid var(--border-color, #d8d8d8);
+}
+
+.recuperar-left-content {
+  width: 100%;
+  max-width: 420px;
+}
+
+.recuperar-brand {
+  font-size: 24px;
+  font-weight: 800;
+  color: #000000;
+  margin: 0 0 42px;
+}
+
+.recuperar-back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #7a7a7a;
+  font-size: 16px;
+  margin-bottom: 34px;
+}
+
+.recuperar-back-link:hover {
+  color: var(--primary, #2f62ff);
+}
+
+.recuperar-back-arrow {
+  font-size: 22px;
+  line-height: 1;
+}
+
+.recuperar-progress {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 34px;
+}
+
+.recuperar-progress-active,
+.recuperar-progress-inactive {
+  display: block;
+  width: 22px;
+  height: 4px;
+  border-radius: 99px;
+}
+
+.recuperar-progress-active {
+  background: var(--primary, #2f62ff);
+}
+
+.recuperar-progress-inactive {
+  background: #cfd9ea;
+}
+
+.recuperar-title {
+  font-size: 28px;
+  line-height: 1.05;
+  font-weight: 800;
+  color: #000000;
+  margin: 0 0 18px;
+  max-width: 260px;
+}
+
+.recuperar-description {
+  font-size: 16px;
+  color: #4a4a4a;
+  line-height: 1.25;
+  margin: 0 0 46px;
+}
+
+.recuperar-form-block {
+  margin-top: 6px;
+}
+
+.recuperar-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  color: #7b7b7b;
+  margin-bottom: 14px;
+  letter-spacing: 0.3px;
+}
+
+.recuperar-code-inputs {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.recuperar-code-input {
+  width: 42px;
+  height: 42px;
+  border: 1px solid #b8b8b8;
+  border-radius: 8px;
+  background: #ffffff;
+  text-align: center;
+  font-size: 20px;
+  outline: none;
+}
+
+.recuperar-code-input:focus {
+  border-color: var(--primary, #2f62ff);
+  box-shadow: 0 0 0 3px rgba(47, 98, 255, 0.12);
+}
+
+.recuperar-verify-button {
+  width: 100%;
+  height: 44px;
+  border: 1px solid #bdbdbd;
+  border-radius: 8px;
+  background: #efefef;
+  color: #111111;
+  font-size: 17px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.recuperar-verify-button:hover {
+  background: #e5e5e5;
+}
+
+.recuperar-resend-text {
+  margin-top: 72px;
+  text-align: center;
+  font-size: 15px;
+  color: #7a7a7a;
+}
+
+.recuperar-resend-text a {
+  color: var(--primary, #2f62ff);
+  font-weight: 700;
+}
+
+/* LATERAL DIREITA */
+.recuperar-right-panel {
+  width: 50%;
+  min-height: 100vh;
+  background: var(--primary-dark, #0f2661);
+  color: #ffffff;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 44px 34px;
+}
+
+.recuperar-circle {
+  position: absolute;
+  top: -75px;
+  right: -65px;
+  width: 210px;
+  height: 210px;
+  border-radius: 50%;
+  background: var(--primary-circle, #173681);
+}
+
+.recuperar-right-content {
+  width: 100%;
+  max-width: 430px;
+  position: relative;
+  z-index: 2;
+}
+
+.recuperar-right-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #a9b3c9;
+  margin: 0 0 32px;
+}
+
+.recuperar-step {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 28px;
+}
+
+.recuperar-step-number {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  border-radius: 50%;
+  background: var(--primary, #2f62ff);
+  color: #ffffff;
+  font-size: 16px;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.recuperar-step h4 {
+  margin: 2px 0 8px;
+  color: #ffffff;
+  font-size: 17px;
+  font-weight: 800;
+}
+
+.recuperar-step p {
+  margin: 0;
+  color: #b7bfd3;
+  font-size: 15px;
+  line-height: 1.2;
+  max-width: 260px;
+}
+
+.recuperar-info-card {
+  margin-top: 60px;
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  background: rgba(255, 255, 255, 0.14);
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.recuperar-info-icon {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  border-radius: 50%;
+  background: #3d73ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.recuperar-info-card h4 {
+  margin: 0 0 10px;
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.recuperar-info-card p {
+  margin: 0;
+  color: #c8d0e2;
+  font-size: 15px;
+  line-height: 1.25;
+  max-width: 245px;
+}
+
+@media (max-width: 900px) {
+  .recuperar-page {
+    flex-direction: column;
+  }
+
+  .recuperar-left-panel,
+  .recuperar-right-panel {
+    width: 100%;
+    min-height: auto;
+  }
+
+  .recuperar-left-panel,
+  .recuperar-right-panel {
+    padding: 36px 24px;
+  }
+
+  .recuperar-resend-text {
+    margin-top: 36px;
+  }
+}
