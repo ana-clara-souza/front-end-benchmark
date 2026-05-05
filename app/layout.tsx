@@ -4,7 +4,8 @@ import "./globals.css";
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './cadastro/cadastro.css';
 import './recuperar-senha/recuperar-senha.css';
-
+import "./dashboard/dashboard.css";
+import "../components/navbar.css";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

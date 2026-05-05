@@ -26,8 +26,10 @@ export default function Login() {
               Esqueceu a senha?
             </a>
 
-            <button className="btn btn-primary w-100 mb-3">
+            <button className="btn btn-primary w-100 mb-3"> 
+              <a href="/dashboard">
               Entrar
+              </a>
             </button>
 
             <button type="button" className="btn btn-light w-100 border mb-3">
