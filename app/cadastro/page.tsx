@@ -40,7 +40,7 @@ export default function Cadastro() {
             </div>
 
             <button type="submit" className="btn-cadastrar">
-              Cadastrar
+              Cadastrar 
             </button>
 
             <p className="login-link">

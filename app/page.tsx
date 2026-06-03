@@ -26,11 +26,11 @@ export default function Login() {
               Esqueceu a senha?
             </a>
 
-            <button className="btn btn-primary w-100 mb-3"> 
-              <a href="/dashboard">
-              Entrar
-              </a>
-            </button>
+            <a
+              href="/dashboard"
+              className="btn btn-primary w-100 mb-3 text-white text-decoration-none"
+            >Entrar
+            </a>
 
             <button type="button" className="btn btn-light w-100 border mb-3">
               Faça login com o Google
@@ -46,7 +46,7 @@ export default function Login() {
           <div className="w-100 d-flex justify-content-center">
             <div className="card p-2 shadow-sm imageCard">
               <img
-                src="/imagem.png"
+                src="/"
                 className="img-fluid rounded loginImage"
                 alt="Imagem do login"
               />

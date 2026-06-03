@@ -4,7 +4,7 @@
 }
 
 .dashboard-content {
-  padding: 0 36px 36px;
+  padding: 32px 56px 56px;
 }
 
 .dashboard-header {
@@ -16,7 +16,7 @@
 
 .dashboard-title {
   margin: 0;
-  font-size: 22px;
+  font-size: 30px;
   font-weight: 800;
   color: #000000;
 }
@@ -31,9 +31,13 @@
   font-size: 15px;
   font-weight: 600;
   cursor: pointer;
+
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 8px;
+
+  transition: 0.2s;
 }
 
 .dashboard-filter-button:hover {
@@ -47,6 +51,57 @@
   justify-content: center;
 }
 
+/* FILTROS */
+
+.filter-container {
+  position: relative;
+}
+
+.filter-dropdown {
+  position: absolute;
+
+  top: 52px;
+  right: 0;
+
+  width: 340px;
+  max-width: calc(100vw - 32px);
+
+  background: #ffffff;
+
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+
+  padding: 20px;
+
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.08);
+
+  z-index: 20;
+}
+
+.filter-dropdown h5 {
+  font-size: 16px;
+  margin-bottom: 14px;
+}
+
+.form-check {
+  margin-bottom: 10px;
+}
+
+.form-check-label {
+  font-size: 14px;
+  color: #374151;
+
+  line-height: 1.4;
+
+  word-break: break-word;
+}
+
+.form-check-input {
+  cursor: pointer;
+}
+
+/* GRID */
+
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1fr 1.4fr;
@@ -55,13 +110,15 @@
 
 .dashboard-card {
   background: #d9d9d9;
-  border-radius: 0;
+  border-radius: 16px;
   min-height: 170px;
 }
 
 .dashboard-card.wide {
   min-height: 170px;
 }
+
+/* TABLET */
 
 @media (max-width: 900px) {
   .dashboard-content {
@@ -81,5 +138,53 @@
     flex-direction: column;
     align-items: flex-start;
     gap: 12px;
+  }
+
+  .filter-dropdown {
+    width: 300px;
+  }
+}
+
+/* MOBILE */
+
+@media (max-width: 576px) {
+  .dashboard-content {
+    padding: 0 16px 20px;
+  }
+
+  .dashboard-title {
+    font-size: 20px;
+  }
+
+  .filter-container {
+    width: 100%;
+  }
+
+  .dashboard-filter-button {
+    width: 100%;
+  }
+
+  .filter-dropdown {
+    position: fixed;
+
+    top: 90px;
+    left: 16px;
+    right: 16px;
+
+    width: auto;
+    max-width: unset;
+
+    padding: 18px;
+
+    border-radius: 16px;
+  }
+
+  .form-check-label {
+    font-size: 13px;
+  }
+
+  .dashboard-card,
+  .dashboard-card.wide {
+    min-height: 140px;
   }
 }

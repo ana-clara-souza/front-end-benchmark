@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+
 import "./globals.css";
-import 'bootstrap/dist/css/bootstrap.min.css';
-import './cadastro/cadastro.css';
-import './recuperar-senha/recuperar-senha.css';
+
+import "bootstrap/dist/css/bootstrap.min.css";
+
+import "./cadastro/cadastro.css";
+import "./recuperar-senha/recuperar-senha.css";
 import "./dashboard/dashboard.css";
+
 import "../components/navbar.css";
+
+import BootstrapClient from "./BootstrapClient";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +38,11 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <BootstrapClient />
+
+        {children}
+      </body>
     </html>
   );
 }
