@@ -1,9 +1,75 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import './cadastro.css';
 
 export default function Cadastro() {
+  const [formData, setFormData] = useState({
+    nomeCompleto: '',
+    emailInstitucional: '',
+    instituicao: '',
+    laboratorio: '',
+    senha: '',
+  });
+
+  const [loading, setLoading] = useState(false);
+  const [mensagem, setMensagem] = useState('');
+  const [erro, setErro] = useState('');
+
+  function handleChange(e) {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault();
+
+    setLoading(true);
+    setMensagem('');
+    setErro('');
+
+    try {
+      const response = await fetch('https://api-ic-mutt.onrender.com/api/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          nomeCompleto: formData.nomeCompleto,
+          emailInstitucional: formData.emailInstitucional,
+          instituicao: formData.instituicao,
+          laboratorio: formData.laboratorio,
+          senha: formData.senha,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Erro ao cadastrar usuário.');
+      }
+
+      setMensagem('Cadastro realizado com sucesso! Verifique seu email.');
+
+      setFormData({
+        nomeCompleto: '',
+        emailInstitucional: '',
+        instituicao: '',
+        laboratorio: '',
+        senha: '',
+      });
+    } catch (error) {
+      setErro(error.message || 'Erro ao conectar com o servidor.');
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <main className="cadastro-page">
       <section className="cadastro-left">
@@ -13,34 +79,76 @@ export default function Cadastro() {
           <h2 className="page-title">Crie sua conta</h2>
           <p className="page-subtitle">Preencha os dados para começar</p>
 
-          <form className="cadastro-form">
+          <form className="cadastro-form" onSubmit={handleSubmit}>
             <div className="form-group">
               <label>Nome Completo</label>
-              <input type="text" />
+              <input
+                type="text"
+                name="nomeCompleto"
+                value={formData.nomeCompleto}
+                onChange={handleChange}
+                required
+              />
             </div>
 
             <div className="form-group">
               <label>Email Institucional</label>
-              <input type="email" />
+              <input
+                type="email"
+                name="emailInstitucional"
+                value={formData.emailInstitucional}
+                onChange={handleChange}
+                required
+              />
             </div>
 
             <div className="form-group">
               <label>Instituição</label>
-              <input type="text" />
+              <input
+                type="text"
+                name="instituicao"
+                value={formData.instituicao}
+                onChange={handleChange}
+                required
+              />
             </div>
 
             <div className="form-group">
               <label>Laboratório</label>
-              <input type="text" />
+              <input
+                type="text"
+                name="laboratorio"
+                value={formData.laboratorio}
+                onChange={handleChange}
+                required
+              />
             </div>
 
             <div className="form-group">
               <label>Senha</label>
-              <input type="password" />
+              <input
+                type="password"
+                name="senha"
+                value={formData.senha}
+                onChange={handleChange}
+                required
+              />
             </div>
 
-            <button type="submit" className="btn-cadastrar">
-              Cadastrar 
+            {mensagem && (
+              <p style={{ color: 'green', marginTop: '10px' }}>
+                {mensagem}
+              </p>
+            )}
+
+            {erro && (
+              <p style={{ color: 'red', marginTop: '10px' }}>
+                {erro}
+              </p>
+            )}
+
+            <button type="submit" className="btn-cadastrar" disabled={loading}>
+              {loading ? 'Cadastrando...' : 'Cadastrar'}
             </button>
 
             <p className="login-link">

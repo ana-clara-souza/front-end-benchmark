@@ -43,7 +43,7 @@ export default function DashboardPage() {
       console.log('Payload enviado:', payload);
 
       const response = await fetch(
-        'https://api-ic-1.onrender.com/api/charts',
+        'https://api-ic-mutt.onrender.com/api/charts',
         {
           method: 'POST',
           headers: {
