@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import './cadastro.css';
 
@@ -17,7 +17,7 @@ export default function Cadastro() {
   const [mensagem, setMensagem] = useState('');
   const [erro, setErro] = useState('');
 
-  function handleChange(e) {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
 
     setFormData((prev) => ({
@@ -26,7 +26,7 @@ export default function Cadastro() {
     }));
   }
 
-  async function handleSubmit(e) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     setLoading(true);
@@ -64,7 +64,8 @@ export default function Cadastro() {
         senha: '',
       });
     } catch (error) {
-      setErro(error.message || 'Erro ao conectar com o servidor.');
+      const errorMessage = error instanceof Error ? error.message : 'Erro ao conectar com o servidor.';
+      setErro(errorMessage);
     } finally {
       setLoading(false);
     }
