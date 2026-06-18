@@ -15,6 +15,19 @@ export default function DashboardPage() {
     chart4: []
   });
 
+  const [chartImages, setChartImages] = useState<Record<string, string | null>>({
+    chart1: null,
+    chart2: null,
+    chart3: null,
+    chart4: null
+  });
+  const [loadingCharts, setLoadingCharts] = useState<Record<string, boolean>>({
+    chart1: false,
+    chart2: false,
+    chart3: false,
+    chart4: false
+  });
+
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [showKeyModal, setShowKeyModal] = useState(false);
@@ -100,43 +113,79 @@ export default function DashboardPage() {
   };
 
   const fetchCharts = async () => {
-    // Unir todos os experimentos selecionados de todos os gráficos selecionados
-    const combinedExperimentsSet = new Set<number>();
-    selectedCharts.forEach((chart) => {
-      const exps = selectedExperiments[chart] || [];
-      exps.forEach((id) => combinedExperimentsSet.add(id));
+    if (selectedCharts.length === 0) return;
+
+    // Inicializar loading para os gráficos selecionados
+    setLoadingCharts((prev) => {
+      const next = { ...prev };
+      selectedCharts.forEach((c) => {
+        next[c] = true;
+      });
+      return next;
     });
-    const combinedExperiments = Array.from(combinedExperimentsSet);
 
-    const payload = {
-      charts: selectedCharts,
-      filters: {
-        _id: combinedExperiments,
-        dataset,
-        device,
-      },
-    };
+    const fetchPromises = selectedCharts.map(async (chart) => {
+      const payload = {
+        charts: [chart],
+        filters: {
+          _id: selectedExperiments[chart] || [],
+          dataset,
+          device,
+        },
+      };
 
-    try {
-      console.log('Payload enviado:', payload);
+      try {
+        console.log(`Enviando payload para ${chart}:`, payload);
+        const response = await fetch(
+          'https://api-ic-mutt.onrender.com/api/charts',
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload),
+          }
+        );
 
-      const response = await fetch(
-        'https://api-ic-mutt.onrender.com/api/charts',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify(payload),
+        if (!response.ok) {
+          throw new Error(`Erro ao buscar dados do gráfico ${chart}`);
         }
-      );
 
-      const data = await response.json();
+        const data = await response.json();
+        console.log(`Resposta para ${chart}:`, data);
+        return { chart, data };
+      } catch (error) {
+        console.error(`Erro no gráfico ${chart}:`, error);
+        return { chart, error };
+      }
+    });
 
-      console.log('Resposta da API:', data);
-    } catch (error) {
-      console.error('Erro:', error);
-    }
+    const results = await Promise.all(fetchPromises);
+
+    setChartImages((prev) => {
+      const next = { ...prev };
+      results.forEach((res) => {
+        if ('data' in res && res.data) {
+          const imgData = res.data[res.chart];
+          if (imgData) {
+            next[res.chart] = imgData.startsWith('data:') ? imgData : `data:image/png;base64,${imgData}`;
+          } else {
+            next[res.chart] = null;
+          }
+        } else {
+          next[res.chart] = null;
+        }
+      });
+      return next;
+    });
+
+    setLoadingCharts((prev) => {
+      const next = { ...prev };
+      selectedCharts.forEach((c) => {
+        next[c] = false;
+      });
+      return next;
+    });
   };
 
   return (
@@ -458,13 +507,73 @@ export default function DashboardPage() {
         </div>
 
         <div className="dashboard-grid">
-          <div className="dashboard-card"></div>
+          {/* CARD 1: chart1 */}
+          <div className={`dashboard-card d-flex flex-column align-items-center justify-content-center p-3 rounded-4 border bg-white shadow-sm ${!selectedCharts.includes('chart1') ? 'opacity-50' : ''}`} style={{ minHeight: '300px' }}>
+            <h5 className="fw-bold text-dark mb-3" style={{ fontSize: '15px' }}>Comparativo de memória por dataset</h5>
+            {!selectedCharts.includes('chart1') ? (
+              <p className="text-muted small mb-0">Selecione este gráfico no filtro</p>
+            ) : loadingCharts.chart1 ? (
+              <div className="d-flex flex-column align-items-center">
+                <div className="spinner-border text-primary mb-2" role="status" style={{ width: '2rem', height: '2rem' }}></div>
+                <span className="text-muted small">Buscando dados...</span>
+              </div>
+            ) : chartImages.chart1 ? (
+              <img src={chartImages.chart1} className="img-fluid object-fit-contain rounded" alt="Comparativo de memória por dataset" style={{ maxHeight: '250px' }} />
+            ) : (
+              <p className="text-muted small mb-0">Clique em &quot;Aplicar Filtros&quot; para gerar o gráfico</p>
+            )}
+          </div>
 
-          <div className="dashboard-card wide"></div>
+          {/* CARD 2: chart2 (wide) */}
+          <div className={`dashboard-card wide d-flex flex-column align-items-center justify-content-center p-3 rounded-4 border bg-white shadow-sm ${!selectedCharts.includes('chart2') ? 'opacity-50' : ''}`} style={{ minHeight: '300px' }}>
+            <h5 className="fw-bold text-dark mb-3" style={{ fontSize: '15px' }}>Memória por modelo e dataset</h5>
+            {!selectedCharts.includes('chart2') ? (
+              <p className="text-muted small mb-0">Selecione este gráfico no filtro</p>
+            ) : loadingCharts.chart2 ? (
+              <div className="d-flex flex-column align-items-center">
+                <div className="spinner-border text-primary mb-2" role="status" style={{ width: '2rem', height: '2rem' }}></div>
+                <span className="text-muted small">Buscando dados...</span>
+              </div>
+            ) : chartImages.chart2 ? (
+              <img src={chartImages.chart2} className="img-fluid object-fit-contain rounded" alt="Memória por modelo e dataset" style={{ maxHeight: '250px' }} />
+            ) : (
+              <p className="text-muted small mb-0">Clique em &quot;Aplicar Filtros&quot; para gerar o gráfico</p>
+            )}
+          </div>
 
-          <div className="dashboard-card"></div>
+          {/* CARD 3: chart3 */}
+          <div className={`dashboard-card d-flex flex-column align-items-center justify-content-center p-3 rounded-4 border bg-white shadow-sm ${!selectedCharts.includes('chart3') ? 'opacity-50' : ''}`} style={{ minHeight: '300px' }}>
+            <h5 className="fw-bold text-dark mb-3" style={{ fontSize: '15px' }}>Tempo de inferência</h5>
+            {!selectedCharts.includes('chart3') ? (
+              <p className="text-muted small mb-0">Selecione este gráfico no filtro</p>
+            ) : loadingCharts.chart3 ? (
+              <div className="d-flex flex-column align-items-center">
+                <div className="spinner-border text-primary mb-2" role="status" style={{ width: '2rem', height: '2rem' }}></div>
+                <span className="text-muted small">Buscando dados...</span>
+              </div>
+            ) : chartImages.chart3 ? (
+              <img src={chartImages.chart3} className="img-fluid object-fit-contain rounded" alt="Tempo de inferência" style={{ maxHeight: '250px' }} />
+            ) : (
+              <p className="text-muted small mb-0">Clique em &quot;Aplicar Filtros&quot; para gerar o gráfico</p>
+            )}
+          </div>
 
-          <div className="dashboard-card wide"></div>
+          {/* CARD 4: chart4 (wide) */}
+          <div className={`dashboard-card wide d-flex flex-column align-items-center justify-content-center p-3 rounded-4 border bg-white shadow-sm ${!selectedCharts.includes('chart4') ? 'opacity-50' : ''}`} style={{ minHeight: '300px' }}>
+            <h5 className="fw-bold text-dark mb-3" style={{ fontSize: '15px' }}>Inferência por segundo</h5>
+            {!selectedCharts.includes('chart4') ? (
+              <p className="text-muted small mb-0">Selecione este gráfico no filtro</p>
+            ) : loadingCharts.chart4 ? (
+              <div className="d-flex flex-column align-items-center">
+                <div className="spinner-border text-primary mb-2" role="status" style={{ width: '2rem', height: '2rem' }}></div>
+                <span className="text-muted small">Buscando dados...</span>
+              </div>
+            ) : chartImages.chart4 ? (
+              <img src={chartImages.chart4} className="img-fluid object-fit-contain rounded" alt="Inferência por segundo" style={{ maxHeight: '250px' }} />
+            ) : (
+              <p className="text-muted small mb-0">Clique em &quot;Aplicar Filtros&quot; para gerar o gráfico</p>
+            )}
+          </div>
         </div>
       </section>
 

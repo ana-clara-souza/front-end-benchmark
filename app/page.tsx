@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 export default function Login() {
   const router = useRouter();
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -24,7 +24,7 @@ export default function Login() {
         },
         body: JSON.stringify({
           emailInstitucional: email,
-          password: password,
+          senha: senha,
         }),
       });
 
@@ -77,8 +77,8 @@ export default function Login() {
               <input
                 type="password"
                 className="form-control"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
                 required
               />
             </div>
