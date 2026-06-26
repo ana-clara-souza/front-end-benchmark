@@ -208,6 +208,36 @@
   margin-bottom: 3px;
 }
 
+/* PASSWORD VISIBILITY TOGGLE */
+.password-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.password-input-wrapper input {
+  padding-right: 46px;
+}
+
+.toggle-password-btn {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  transition: color 0.2s ease;
+}
+
+.toggle-password-btn:hover {
+  color: #4c63f0;
+}
+
 @media (max-width: 768px) {
   .cadastro-page {
     flex-direction: column;

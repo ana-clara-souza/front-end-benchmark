@@ -1,14 +1,24 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 import Navbar from '../../components/Navbar';
 
 export default function DashboardPage() {
-  const [openFilter, setOpenFilter] = useState(false);
+  const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'filtros' | 'graficos'>('filtros');
+  const [comparisonMode, setComparisonMode] = useState<'experimento' | 'modelo'>('experimento');
 
   const [selectedCharts, setSelectedCharts] = useState<string[]>([]);
-  const [selectedExperiments, setSelectedExperiments] = useState<Record<string, number[]>>({
+  const [selectedExperiments, setSelectedExperiments] = useState<Record<string, any[]>>({
+    chart1: [],
+    chart2: [],
+    chart3: [],
+    chart4: []
+  });
+
+  const [selectedModels, setSelectedModels] = useState<Record<string, string[]>>({
     chart1: [],
     chart2: [],
     chart3: [],
@@ -28,29 +38,61 @@ export default function DashboardPage() {
     chart4: false
   });
 
+  const [myExperiments, setMyExperiments] = useState<any[]>([]);
+  const [loadingExperiments, setLoadingExperiments] = useState(false);
+
+  const [selectedSingleExperiment, setSelectedSingleExperiment] = useState<string>('');
+  const availableModels = ['ResNet50', 'MobileNetV2', 'VGG16'];
+
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [keyError, setKeyError] = useState<string | null>(null);
+
+  const [dataset, setDataset] = useState('deepweeds');
+  const [device, setDevice] = useState('Slow-end');
+  const [model, setModel] = useState('ResNet50');
+
+  const chartLimits: Record<string, number> = {
+    chart1: 6,
+    chart2: 3,
+    chart3: 2,
+    chart4: 2
+  };
+
+  const chartTitles: Record<string, string> = {
+    chart1: 'Comparativo de memória por dataset',
+    chart2: 'Memória por modelo e dataset',
+    chart3: 'Tempo de inferência',
+    chart4: 'Inferência por segundo'
+  };
 
   const generateKey = async () => {
     setGenerating(true);
     setGeneratedKey(null);
     setKeyError(null);
     try {
+      const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+      if (!token) {
+        throw new Error('Token não informado. Faça login novamente.');
+      }
       const response = await fetch('https://api-ic-mutt.onrender.com/api/experimentos/chaves', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
       });
-      if (!response.ok) {
-        throw new Error('Erro ao gerar chave de experimento.');
-      }
       const data = await response.json();
-      if (data && data.key) {
-        setGeneratedKey(data.key);
+      console.log('Resposta de chaves:', data);
+      if (!response.ok) {
+        throw new Error(data.message || 'Erro ao gerar chave de experimento.');
+      }
+      const retrievedKey = data.key || data._id || data.id;
+      if (data && retrievedKey) {
+        setGeneratedKey(retrievedKey);
         setShowKeyModal(true);
+        fetchMyExperiments();
       } else {
         throw new Error('Resposta inválida do servidor.');
       }
@@ -63,35 +105,53 @@ export default function DashboardPage() {
     }
   };
 
-  const [dataset, setDataset] = useState('deepweeds');
-  const [device, setDevice] = useState('Slow-end');
-
-  const chartLimits: Record<string, number> = {
-    chart1: 6,
-    chart2: 3,
-    chart3: 2,
-    chart4: 2
+  const fetchMyExperiments = async () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (!token) return;
+    setLoadingExperiments(true);
+    try {
+      const response = await fetch('https://api-ic-mutt.onrender.com/api/experimentos/meus-experimentos', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) {
+        throw new Error('Erro ao buscar experimentos.');
+      }
+      const data = await response.json();
+      console.log('Resposta de meus experimentos:', data);
+      setMyExperiments(Array.isArray(data) ? data : []);
+    } catch (e) {
+      console.error('Erro na requisição de meus experimentos:', e);
+    } finally {
+      setLoadingExperiments(false);
+    }
   };
+
 
   const handleChartChange = (chart: string) => {
     setSelectedCharts((prev) => {
-      const nextCharts = prev.includes(chart)
+      const isSelected = prev.includes(chart);
+      const nextCharts = isSelected
         ? prev.filter((c) => c !== chart)
         : [...prev, chart];
 
-      // Limpar experimentos do gráfico se for desmarcado
-      if (prev.includes(chart)) {
+      if (isSelected) {
         setSelectedExperiments((prevExps) => ({
           ...prevExps,
           [chart]: []
         }));
+        setSelectedModels((prevModels) => ({
+          ...prevModels,
+          [chart]: []
+        }));
       }
-
       return nextCharts;
     });
   };
 
-  const handleExperimentChange = (chart: string, id: number) => {
+  const handleExperimentChange = (chart: string, id: any) => {
     setSelectedExperiments((prev) => {
       const currentList = prev[chart] || [];
       const limit = chartLimits[chart] || 6;
@@ -112,36 +172,85 @@ export default function DashboardPage() {
     });
   };
 
-  const fetchCharts = async () => {
-    if (selectedCharts.length === 0) return;
+  const handleModelChange = (chart: string, modelName: string) => {
+    setSelectedModels((prev) => {
+      const currentList = prev[chart] || [];
+      const limit = chartLimits[chart] || 6;
+      if (currentList.includes(modelName)) {
+        return {
+          ...prev,
+          [chart]: currentList.filter((m) => m !== modelName)
+        };
+      } else {
+        if (currentList.length >= limit) {
+          return prev;
+        }
+        return {
+          ...prev,
+          [chart]: [...currentList, modelName]
+        };
+      }
+    });
+  };
 
-    // Inicializar loading para os gráficos selecionados
+  const fetchCharts = async (
+    charts = selectedCharts,
+    experiments = selectedExperiments,
+    ds = dataset,
+    dev = device,
+    mod = model,
+    compMode = comparisonMode,
+    singleExp = selectedSingleExperiment,
+    selModels = selectedModels
+  ) => {
+    if (charts.length === 0) return;
+
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+
     setLoadingCharts((prev) => {
       const next = { ...prev };
-      selectedCharts.forEach((c) => {
+      charts.forEach((c) => {
         next[c] = true;
       });
       return next;
     });
 
-    const fetchPromises = selectedCharts.map(async (chart) => {
+    const formatFilterArray = (arr: any[]) => {
+      return `[${arr.join(', ')}]`;
+    };
+
+    const fetchPromises = charts.map(async (chart) => {
+      let filtersPayload: any = {};
+
+      if (compMode === 'modelo') {
+        filtersPayload = {
+          modelo: formatFilterArray(selModels[chart] || []),
+          dataset: formatFilterArray([ds])
+        };
+      } else {
+        filtersPayload = {
+          _id: (experiments[chart] || []).join(', ')
+        };
+      }
+
       const payload = {
         charts: [chart],
-        filters: {
-          _id: selectedExperiments[chart] || [],
-          dataset,
-          device,
-        },
+        filters: filtersPayload,
       };
 
+      console.log('Payload enviado para api/charts:', payload);
+
       try {
-        console.log(`Enviando payload para ${chart}:`, payload);
+        if (!token) {
+          throw new Error('Token não informado. Faça login novamente.');
+        }
         const response = await fetch(
           'https://api-ic-mutt.onrender.com/api/charts',
           {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
             },
             body: JSON.stringify(payload),
           }
@@ -152,7 +261,7 @@ export default function DashboardPage() {
         }
 
         const data = await response.json();
-        console.log(`Resposta para ${chart}:`, data);
+        console.log(`Resposta da API para o gráfico ${chart}:`, data);
         return { chart, data };
       } catch (error) {
         console.error(`Erro no gráfico ${chart}:`, error);
@@ -181,11 +290,70 @@ export default function DashboardPage() {
 
     setLoadingCharts((prev) => {
       const next = { ...prev };
-      selectedCharts.forEach((c) => {
+      charts.forEach((c) => {
         next[c] = false;
       });
       return next;
     });
+  };
+
+  useEffect(() => {
+    const saved = localStorage.getItem('benchmark_filters');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.selectedCharts) setSelectedCharts(parsed.selectedCharts);
+        if (parsed.selectedExperiments) setSelectedExperiments(parsed.selectedExperiments);
+        if (parsed.dataset) setDataset(parsed.dataset);
+        if (parsed.device) setDevice(parsed.device);
+        if (parsed.model) setModel(parsed.model);
+        if (parsed.comparisonMode) setComparisonMode(parsed.comparisonMode);
+        if (parsed.selectedSingleExperiment) setSelectedSingleExperiment(parsed.selectedSingleExperiment);
+        if (parsed.selectedModels) setSelectedModels(parsed.selectedModels);
+
+        fetchCharts(
+          parsed.selectedCharts || [],
+          parsed.selectedExperiments || { chart1: [], chart2: [], chart3: [], chart4: [] },
+          parsed.dataset || 'deepweeds',
+          parsed.device || 'Slow-end',
+          parsed.model || 'ResNet50',
+          parsed.comparisonMode || 'experimento',
+          parsed.selectedSingleExperiment || '',
+          parsed.selectedModels || { chart1: [], chart2: [], chart3: [], chart4: [] }
+        );
+        setActiveTab('graficos');
+      } catch (e) {
+        console.error('Erro ao ler filtros do localStorage no Dashboard:', e);
+      }
+    }
+    fetchMyExperiments();
+  }, []);
+
+
+
+  const handleApplyFilters = () => {
+    const filters = {
+      selectedCharts,
+      selectedExperiments,
+      dataset,
+      device,
+      model,
+      comparisonMode,
+      selectedSingleExperiment,
+      selectedModels
+    };
+    localStorage.setItem('benchmark_filters', JSON.stringify(filters));
+    fetchCharts(
+      selectedCharts,
+      selectedExperiments,
+      dataset,
+      device,
+      model,
+      comparisonMode,
+      selectedSingleExperiment,
+      selectedModels
+    );
+    setActiveTab('graficos');
   };
 
   return (
@@ -195,7 +363,7 @@ export default function DashboardPage() {
       <section className="dashboard-content">
         <div className="dashboard-header">
           <h2 className="dashboard-title">
-            Gráficos
+            Dashboard
           </h2>
 
           <div className="d-flex gap-3 align-items-center flex-wrap">
@@ -220,364 +388,335 @@ export default function DashboardPage() {
                 </>
               )}
             </button>
+          </div>
+        </div>
 
-            <div className="filter-container">
-              <button
-                className="dashboard-filter-button"
-                type="button"
-                onClick={() =>
-                  setOpenFilter(!openFilter)
-                }
-              >
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-              >
-                <path
-                  d="M3 5H21L14 13V19L10 21V13L3 5Z"
-                  stroke="currentColor"
-                  strokeWidth="1.8"
-                  strokeLinejoin="round"
-                />
-              </svg>
+        <div className="dashboard-tabs">
+          <button
+            className={`tab-button ${activeTab === 'filtros' ? 'active' : ''}`}
+            onClick={() => setActiveTab('filtros')}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+            </svg>
+            Filtros
+          </button>
+          <button
+            className={`tab-button ${activeTab === 'graficos' ? 'active' : ''}`}
+            onClick={() => setActiveTab('graficos')}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="20" x2="18" y2="10"></line>
+              <line x1="12" y1="20" x2="12" y2="4"></line>
+              <line x1="6" y1="20" x2="6" y2="14"></line>
+            </svg>
+            Gráficos
+          </button>
+        </div>
 
-              Filtros
-            </button>
-
-            {openFilter && (
-              <div className="filter-dropdown">
-                <div className="mb-4">
-                  <h5 className="fw-bold mb-3">
-                    Gráficos e Experimentos
-                  </h5>
-
-                  {/* CHART 1 */}
-                  <div className="mb-3 border-bottom pb-2">
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        id="graf1"
-                        checked={selectedCharts.includes('chart1')}
-                        onChange={() => handleChartChange('chart1')}
-                      />
-                      <label className="form-check-label fw-semibold" htmlFor="graf1">
-                        Comparativo de memória por dataset
-                        <span className="ms-2 badge bg-secondary font-monospace" style={{ fontSize: '10px' }}>
-                          limite: 6
-                        </span>
-                      </label>
-                    </div>
-                    {selectedCharts.includes('chart1') && (
-                      <div className="ms-4 mt-2 mb-1">
-                        <div className="small text-muted mb-1" style={{ fontSize: '12px' }}>
-                          Selecione até 6 experimentos:
-                        </div>
-                        <div className="d-flex flex-wrap gap-2">
-                          {[1, 2, 3, 4, 5, 6, 7, 8].map((id) => {
-                            const isChecked = selectedExperiments.chart1?.includes(id) || false;
-                            const isDisabled = !isChecked && (selectedExperiments.chart1?.length || 0) >= 6;
-                            return (
-                              <div key={id} className="form-check form-check-inline m-0">
-                                <input
-                                  className="form-check-input"
-                                  type="checkbox"
-                                  id={`exp-chart1-${id}`}
-                                  checked={isChecked}
-                                  disabled={isDisabled}
-                                  onChange={() => handleExperimentChange('chart1', id)}
-                                />
-                                <label className="form-check-label small" htmlFor={`exp-chart1-${id}`}>
-                                  {id}
-                                </label>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* CHART 2 */}
-                  <div className="mb-3 border-bottom pb-2">
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        id="graf2"
-                        checked={selectedCharts.includes('chart2')}
-                        onChange={() => handleChartChange('chart2')}
-                      />
-                      <label className="form-check-label fw-semibold" htmlFor="graf2">
-                        Memória por modelo e dataset
-                        <span className="ms-2 badge bg-secondary font-monospace" style={{ fontSize: '10px' }}>
-                          limite: 3
-                        </span>
-                      </label>
-                    </div>
-                    {selectedCharts.includes('chart2') && (
-                      <div className="ms-4 mt-2 mb-1">
-                        <div className="small text-muted mb-1" style={{ fontSize: '12px' }}>
-                          Selecione até 3 experimentos:
-                        </div>
-                        <div className="d-flex flex-wrap gap-2">
-                          {[1, 2, 3, 4, 5, 6, 7, 8].map((id) => {
-                            const isChecked = selectedExperiments.chart2?.includes(id) || false;
-                            const isDisabled = !isChecked && (selectedExperiments.chart2?.length || 0) >= 3;
-                            return (
-                              <div key={id} className="form-check form-check-inline m-0">
-                                <input
-                                  className="form-check-input"
-                                  type="checkbox"
-                                  id={`exp-chart2-${id}`}
-                                  checked={isChecked}
-                                  disabled={isDisabled}
-                                  onChange={() => handleExperimentChange('chart2', id)}
-                                />
-                                <label className="form-check-label small" htmlFor={`exp-chart2-${id}`}>
-                                  {id}
-                                </label>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* CHART 3 */}
-                  <div className="mb-3 border-bottom pb-2">
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        id="graf3"
-                        checked={selectedCharts.includes('chart3')}
-                        onChange={() => handleChartChange('chart3')}
-                      />
-                      <label className="form-check-label fw-semibold" htmlFor="graf3">
-                        Tempo de inferência
-                        <span className="ms-2 badge bg-secondary font-monospace" style={{ fontSize: '10px' }}>
-                          limite: 2
-                        </span>
-                      </label>
-                    </div>
-                    {selectedCharts.includes('chart3') && (
-                      <div className="ms-4 mt-2 mb-1">
-                        <div className="small text-muted mb-1" style={{ fontSize: '12px' }}>
-                          Selecione até 2 experimentos:
-                        </div>
-                        <div className="d-flex flex-wrap gap-2">
-                          {[1, 2, 3, 4, 5, 6, 7, 8].map((id) => {
-                            const isChecked = selectedExperiments.chart3?.includes(id) || false;
-                            const isDisabled = !isChecked && (selectedExperiments.chart3?.length || 0) >= 2;
-                            return (
-                              <div key={id} className="form-check form-check-inline m-0">
-                                <input
-                                  className="form-check-input"
-                                  type="checkbox"
-                                  id={`exp-chart3-${id}`}
-                                  checked={isChecked}
-                                  disabled={isDisabled}
-                                  onChange={() => handleExperimentChange('chart3', id)}
-                                />
-                                <label className="form-check-label small" htmlFor={`exp-chart3-${id}`}>
-                                  {id}
-                                </label>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* CHART 4 */}
-                  <div className="mb-3">
-                    <div className="form-check">
-                      <input
-                        className="form-check-input"
-                        type="checkbox"
-                        id="graf4"
-                        checked={selectedCharts.includes('chart4')}
-                        onChange={() => handleChartChange('chart4')}
-                      />
-                      <label className="form-check-label fw-semibold" htmlFor="graf4">
-                        Inferência por segundo
-                        <span className="ms-2 badge bg-secondary font-monospace" style={{ fontSize: '10px' }}>
-                          limite: 2
-                        </span>
-                      </label>
-                    </div>
-                    {selectedCharts.includes('chart4') && (
-                      <div className="ms-4 mt-2 mb-1">
-                        <div className="small text-muted mb-1" style={{ fontSize: '12px' }}>
-                          Selecione até 2 experimentos:
-                        </div>
-                        <div className="d-flex flex-wrap gap-2">
-                          {[1, 2, 3, 4, 5, 6, 7, 8].map((id) => {
-                            const isChecked = selectedExperiments.chart4?.includes(id) || false;
-                            const isDisabled = !isChecked && (selectedExperiments.chart4?.length || 0) >= 2;
-                            return (
-                              <div key={id} className="form-check form-check-inline m-0">
-                                <input
-                                  className="form-check-input"
-                                  type="checkbox"
-                                  id={`exp-chart4-${id}`}
-                                  checked={isChecked}
-                                  disabled={isDisabled}
-                                  onChange={() => handleExperimentChange('chart4', id)}
-                                />
-                                <label className="form-check-label small" htmlFor={`exp-chart4-${id}`}>
-                                  {id}
-                                </label>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mb-4">
-                  <h5 className="fw-bold mb-3">
-                    Dataset
-                  </h5>
-
-                  <select
-                    className="form-select"
-                    value={dataset}
-                    onChange={(e) =>
-                      setDataset(e.target.value)
-                    }
-                  >
-                    <option value="deepweeds">
-                      deepweeds
-                    </option>
-
-                    <option value="cifar10">
-                      cifar10
-                    </option>
-
-                    <option value="imagenet">
-                      imagenet
-                    </option>
-                  </select>
-                </div>
-
-                <div className="mb-4">
-                  <h5 className="fw-bold mb-3">
-                    Device
-                  </h5>
-
-                  <select
-                    className="form-select"
-                    value={device}
-                    onChange={(e) =>
-                      setDevice(e.target.value)
-                    }
-                  >
-                    <option value="Slow-end">
-                      Slow-end
-                    </option>
-
-                    <option value="Mid-end">
-                      Mid-end
-                    </option>
-
-                    <option value="High-end">
-                      High-end
-                    </option>
-                  </select>
-                </div>
-
+        {activeTab === 'filtros' ? (
+          <div>
+            <div className="comparison-toggle-container">
+              <span className="comparison-toggle-label">Tipo de Comparação</span>
+              <div className="comparison-toggle">
                 <button
-                  className="btn btn-primary w-100"
-                  onClick={fetchCharts}
+                  type="button"
+                  className={`comparison-btn ${comparisonMode === 'experimento' ? 'active' : ''}`}
+                  onClick={() => setComparisonMode('experimento')}
                 >
-                  Aplicar Filtros
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-1">
+                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+                  </svg>
+                  Por Experimento
+                </button>
+                <button
+                  type="button"
+                  className={`comparison-btn ${comparisonMode === 'modelo' ? 'active' : ''}`}
+                  onClick={() => setComparisonMode('modelo')}
+                >
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-1">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <circle cx="12" cy="12" r="4"></circle>
+                    <line x1="12" y1="2" x2="12" y2="4"></line>
+                    <line x1="12" y1="20" x2="12" y2="22"></line>
+                    <line x1="2" y1="12" x2="4" y2="12"></line>
+                    <line x1="20" y1="12" x2="22" y2="12"></line>
+                  </svg>
+                  Por Modelo
                 </button>
               </div>
-            )}
-          </div>
-          </div>
-        </div>
+            </div>
 
-        <div className="dashboard-grid">
-          {/* CARD 1: chart1 */}
-          <div className={`dashboard-card d-flex flex-column align-items-center justify-content-center p-3 rounded-4 border bg-white shadow-sm ${!selectedCharts.includes('chart1') ? 'opacity-50' : ''}`} style={{ minHeight: '300px' }}>
-            <h5 className="fw-bold text-dark mb-3" style={{ fontSize: '15px' }}>Comparativo de memória por dataset</h5>
-            {!selectedCharts.includes('chart1') ? (
-              <p className="text-muted small mb-0">Selecione este gráfico no filtro</p>
-            ) : loadingCharts.chart1 ? (
-              <div className="d-flex flex-column align-items-center">
-                <div className="spinner-border text-primary mb-2" role="status" style={{ width: '2rem', height: '2rem' }}></div>
-                <span className="text-muted small">Buscando dados...</span>
+            {comparisonMode === 'modelo' && (
+              <div className="single-exp-select-container">
+                <h5>Selecione o Experimento</h5>
+                {loadingExperiments ? (
+                  <div className="d-flex align-items-center gap-2 py-2">
+                    <span className="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
+                    <span className="text-muted small">Buscando experimentos...</span>
+                  </div>
+                ) : myExperiments.length === 0 ? (
+                  <p className="text-muted small mb-0">Nenhum experimento encontrado. Gere uma chave para começar.</p>
+                ) : (
+                  <div className="d-flex flex-wrap gap-2">
+                    {myExperiments.map((exp) => {
+                      const expId = exp._id || exp.key || exp.chave || exp.id || exp;
+                      const expDisplay = expId;
+                      const isSelected = selectedSingleExperiment === expId;
+                      return (
+                        <button
+                          key={String(expId)}
+                          type="button"
+                          className={`exp-chip ${isSelected ? 'selected' : ''}`}
+                          onClick={() => setSelectedSingleExperiment(String(expId))}
+                          title={String(expDisplay)}
+                        >
+                          {String(expDisplay)}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
-            ) : chartImages.chart1 ? (
-              <img src={chartImages.chart1} className="img-fluid object-fit-contain rounded" alt="Comparativo de memória por dataset" style={{ maxHeight: '250px' }} />
-            ) : (
-              <p className="text-muted small mb-0">Clique em &quot;Aplicar Filtros&quot; para gerar o gráfico</p>
             )}
-          </div>
 
-          {/* CARD 2: chart2 (wide) */}
-          <div className={`dashboard-card wide d-flex flex-column align-items-center justify-content-center p-3 rounded-4 border bg-white shadow-sm ${!selectedCharts.includes('chart2') ? 'opacity-50' : ''}`} style={{ minHeight: '300px' }}>
-            <h5 className="fw-bold text-dark mb-3" style={{ fontSize: '15px' }}>Memória por modelo e dataset</h5>
-            {!selectedCharts.includes('chart2') ? (
-              <p className="text-muted small mb-0">Selecione este gráfico no filtro</p>
-            ) : loadingCharts.chart2 ? (
-              <div className="d-flex flex-column align-items-center">
-                <div className="spinner-border text-primary mb-2" role="status" style={{ width: '2rem', height: '2rem' }}></div>
-                <span className="text-muted small">Buscando dados...</span>
-              </div>
-            ) : chartImages.chart2 ? (
-              <img src={chartImages.chart2} className="img-fluid object-fit-contain rounded" alt="Memória por modelo e dataset" style={{ maxHeight: '250px' }} />
-            ) : (
-              <p className="text-muted small mb-0">Clique em &quot;Aplicar Filtros&quot; para gerar o gráfico</p>
-            )}
-          </div>
+            <div className="charts-grid">
+              {Object.keys(chartTitles).map((chartKey) => {
+                const isSelected = selectedCharts.includes(chartKey);
+                const limit = chartLimits[chartKey];
+                const currentSelectedCount = selectedExperiments[chartKey]?.length || 0;
 
-          {/* CARD 3: chart3 */}
-          <div className={`dashboard-card d-flex flex-column align-items-center justify-content-center p-3 rounded-4 border bg-white shadow-sm ${!selectedCharts.includes('chart3') ? 'opacity-50' : ''}`} style={{ minHeight: '300px' }}>
-            <h5 className="fw-bold text-dark mb-3" style={{ fontSize: '15px' }}>Tempo de inferência</h5>
-            {!selectedCharts.includes('chart3') ? (
-              <p className="text-muted small mb-0">Selecione este gráfico no filtro</p>
-            ) : loadingCharts.chart3 ? (
-              <div className="d-flex flex-column align-items-center">
-                <div className="spinner-border text-primary mb-2" role="status" style={{ width: '2rem', height: '2rem' }}></div>
-                <span className="text-muted small">Buscando dados...</span>
-              </div>
-            ) : chartImages.chart3 ? (
-              <img src={chartImages.chart3} className="img-fluid object-fit-contain rounded" alt="Tempo de inferência" style={{ maxHeight: '250px' }} />
-            ) : (
-              <p className="text-muted small mb-0">Clique em &quot;Aplicar Filtros&quot; para gerar o gráfico</p>
-            )}
-          </div>
+                return (
+                  <div key={chartKey} className={`chart-filter-card ${isSelected ? 'selected' : ''}`}>
+                    <div className="card-header-custom">
+                      <div>
+                        <label className="chart-label" htmlFor={`chk-${chartKey}`}>
+                          {chartTitles[chartKey]}
+                        </label>
+                        <div>
+                          <span className="limit-badge">Limite: {limit}</span>
+                        </div>
+                      </div>
+                      <input
+                        type="checkbox"
+                        id={`chk-${chartKey}`}
+                        className="chart-card-checkbox"
+                        checked={isSelected}
+                        onChange={() => handleChartChange(chartKey)}
+                      />
+                    </div>
 
-          {/* CARD 4: chart4 (wide) */}
-          <div className={`dashboard-card wide d-flex flex-column align-items-center justify-content-center p-3 rounded-4 border bg-white shadow-sm ${!selectedCharts.includes('chart4') ? 'opacity-50' : ''}`} style={{ minHeight: '300px' }}>
-            <h5 className="fw-bold text-dark mb-3" style={{ fontSize: '15px' }}>Inferência por segundo</h5>
-            {!selectedCharts.includes('chart4') ? (
-              <p className="text-muted small mb-0">Selecione este gráfico no filtro</p>
-            ) : loadingCharts.chart4 ? (
-              <div className="d-flex flex-column align-items-center">
-                <div className="spinner-border text-primary mb-2" role="status" style={{ width: '2rem', height: '2rem' }}></div>
-                <span className="text-muted small">Buscando dados...</span>
+                    {isSelected && (
+                      <div className="experiments-section">
+                        {comparisonMode === 'experimento' ? (
+                          <>
+                            <div className="experiments-title">
+                              <span>Selecione os experimentos para comparar:</span>
+                              <span className="experiments-count">{currentSelectedCount}/{limit}</span>
+                            </div>
+                            {loadingExperiments ? (
+                              <div className="d-flex align-items-center gap-2 py-2">
+                                <span className="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
+                                <span className="text-muted small">Buscando experimentos...</span>
+                              </div>
+                            ) : myExperiments.length === 0 ? (
+                              <div className="small text-muted py-2">
+                                Nenhum experimento encontrado. Gere uma chave para começar.
+                              </div>
+                            ) : (
+                              <div className="chips-container">
+                                {myExperiments.map((exp) => {
+                                  const expId = exp._id || exp.key || exp.chave || exp.id || exp;
+                                  const expDisplay = expId;
+                                  const isExpChecked = selectedExperiments[chartKey]?.includes(expId) || false;
+                                  const isLimitReached = !isExpChecked && currentSelectedCount >= limit;
+
+                                  return (
+                                    <button
+                                      key={String(expId)}
+                                      type="button"
+                                      className={`exp-chip ${isExpChecked ? 'selected' : ''}`}
+                                      disabled={isLimitReached}
+                                      onClick={() => handleExperimentChange(chartKey, expId)}
+                                      title={String(expDisplay)}
+                                    >
+                                      {String(expDisplay)}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            <div className="experiments-title">
+                              <span>Selecione os modelos para comparar:</span>
+                              <span className="experiments-count">{(selectedModels[chartKey]?.length || 0)}/{limit}</span>
+                            </div>
+                            {!selectedSingleExperiment ? (
+                              <div className="small text-muted py-2">
+                                Selecione um experimento acima primeiro.
+                              </div>
+                            ) : (
+                              <div className="chips-container">
+                                {availableModels.map((modName) => {
+                                  const isModelChecked = selectedModels[chartKey]?.includes(modName) || false;
+                                  const isLimitReached = !isModelChecked && (selectedModels[chartKey]?.length || 0) >= limit;
+
+                                  return (
+                                    <button
+                                      key={modName}
+                                      type="button"
+                                      className={`exp-chip ${isModelChecked ? 'selected' : ''}`}
+                                      disabled={isLimitReached}
+                                      onClick={() => handleModelChange(chartKey, modName)}
+                                      title={modName}
+                                    >
+                                      {modName}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            <div className="params-container">
+              <div className="param-card">
+                <h5 className="param-title">Dataset</h5>
+                <div className="segmented-control">
+                  {['deepweeds', 'cifar10', 'imagenet'].map((ds) => (
+                    <button
+                      key={ds}
+                      type="button"
+                      className={`segment-btn ${dataset === ds ? 'active' : ''}`}
+                      onClick={() => setDataset(ds)}
+                    >
+                      {ds}
+                    </button>
+                  ))}
+                </div>
               </div>
-            ) : chartImages.chart4 ? (
-              <img src={chartImages.chart4} className="img-fluid object-fit-contain rounded" alt="Inferência por segundo" style={{ maxHeight: '250px' }} />
-            ) : (
-              <p className="text-muted small mb-0">Clique em &quot;Aplicar Filtros&quot; para gerar o gráfico</p>
-            )}
+
+              <div className="param-card">
+                <h5 className="param-title">Device</h5>
+                <div className="segmented-control">
+                  {['Slow-end', 'Mid-end', 'High-end'].map((dev) => (
+                    <button
+                      key={dev}
+                      type="button"
+                      className={`segment-btn ${device === dev ? 'active' : ''}`}
+                      onClick={() => setDevice(dev)}
+                    >
+                      {dev}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {comparisonMode === 'experimento' && (
+                <div className="param-card">
+                  <h5 className="param-title">Modelo</h5>
+                  <div className="segmented-control">
+                    {availableModels.map((mod) => (
+                      <button
+                        key={mod}
+                        type="button"
+                        className={`segment-btn ${model === mod ? 'active' : ''}`}
+                        onClick={() => setModel(mod)}
+                      >
+                        {mod}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="apply-section">
+              <button className="btn-apply-filters" onClick={handleApplyFilters}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                Aplicar Filtros e Ver Gráficos
+              </button>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="dashboard-grid">
+            <div className={`dashboard-card d-flex flex-column align-items-center justify-content-center p-3 rounded-4 border bg-white shadow-sm ${!selectedCharts.includes('chart1') ? 'opacity-50' : ''}`} style={{ minHeight: '300px' }}>
+              <h5 className="fw-bold text-dark mb-3" style={{ fontSize: '15px' }}>Comparativo de memória por dataset</h5>
+              {!selectedCharts.includes('chart1') ? (
+                <p className="text-muted small mb-0">Selecione este gráfico no filtro</p>
+              ) : loadingCharts.chart1 ? (
+                <div className="d-flex flex-column align-items-center">
+                  <div className="spinner-border text-primary mb-2" role="status" style={{ width: '2rem', height: '2rem' }}></div>
+                  <span className="text-muted small">Buscando dados...</span>
+                </div>
+              ) : chartImages.chart1 ? (
+                <img src={chartImages.chart1} className="img-fluid object-fit-contain rounded" alt="Comparativo de memória por dataset" style={{ maxHeight: '250px' }} />
+              ) : (
+                <p className="text-muted small mb-0">Clique em &quot;Aplicar Filtros&quot; para gerar o gráfico</p>
+              )}
+            </div>
+
+            <div className={`dashboard-card wide d-flex flex-column align-items-center justify-content-center p-3 rounded-4 border bg-white shadow-sm ${!selectedCharts.includes('chart2') ? 'opacity-50' : ''}`} style={{ minHeight: '300px' }}>
+              <h5 className="fw-bold text-dark mb-3" style={{ fontSize: '15px' }}>Memória por modelo e dataset</h5>
+              {!selectedCharts.includes('chart2') ? (
+                <p className="text-muted small mb-0">Selecione este gráfico no filtro</p>
+              ) : loadingCharts.chart2 ? (
+                <div className="d-flex flex-column align-items-center">
+                  <div className="spinner-border text-primary mb-2" role="status" style={{ width: '2rem', height: '2rem' }}></div>
+                  <span className="text-muted small">Buscando dados...</span>
+                </div>
+              ) : chartImages.chart2 ? (
+                <img src={chartImages.chart2} className="img-fluid object-fit-contain rounded" alt="Memória por modelo e dataset" style={{ maxHeight: '250px' }} />
+              ) : (
+                <p className="text-muted small mb-0">Clique em &quot;Aplicar Filtros&quot; para gerar o gráfico</p>
+              )}
+            </div>
+
+            <div className={`dashboard-card d-flex flex-column align-items-center justify-content-center p-3 rounded-4 border bg-white shadow-sm ${!selectedCharts.includes('chart3') ? 'opacity-50' : ''}`} style={{ minHeight: '300px' }}>
+              <h5 className="fw-bold text-dark mb-3" style={{ fontSize: '15px' }}>Tempo de inferência</h5>
+              {!selectedCharts.includes('chart3') ? (
+                <p className="text-muted small mb-0">Selecione este gráfico no filtro</p>
+              ) : loadingCharts.chart3 ? (
+                <div className="d-flex flex-column align-items-center">
+                  <div className="spinner-border text-primary mb-2" role="status" style={{ width: '2rem', height: '2rem' }}></div>
+                  <span className="text-muted small">Buscando dados...</span>
+                </div>
+              ) : chartImages.chart3 ? (
+                <img src={chartImages.chart3} className="img-fluid object-fit-contain rounded" alt="Tempo de inferência" style={{ maxHeight: '250px' }} />
+              ) : (
+                <p className="text-muted small mb-0">Clique em &quot;Aplicar Filtros&quot; para gerar o gráfico</p>
+              )}
+            </div>
+
+            <div className={`dashboard-card wide d-flex flex-column align-items-center justify-content-center p-3 rounded-4 border bg-white shadow-sm ${!selectedCharts.includes('chart4') ? 'opacity-50' : ''}`} style={{ minHeight: '300px' }}>
+              <h5 className="fw-bold text-dark mb-3" style={{ fontSize: '15px' }}>Inferência por segundo</h5>
+              {!selectedCharts.includes('chart4') ? (
+                <p className="text-muted small mb-0">Selecione este gráfico no filtro</p>
+              ) : loadingCharts.chart4 ? (
+                <div className="d-flex flex-column align-items-center">
+                  <div className="spinner-border text-primary mb-2" role="status" style={{ width: '2rem', height: '2rem' }}></div>
+                  <span className="text-muted small">Buscando dados...</span>
+                </div>
+              ) : chartImages.chart4 ? (
+                <img src={chartImages.chart4} className="img-fluid object-fit-contain rounded" alt="Inferência por segundo" style={{ maxHeight: '250px' }} />
+              ) : (
+                <p className="text-muted small mb-0">Clique em &quot;Aplicar Filtros&quot; para gerar o gráfico</p>
+              )}
+            </div>
+          </div>
+        )}
       </section>
 
-      {/* Modal de Chave de Experimento */}
       {showKeyModal && (
         <div className="modal show d-block" tabIndex={-1} style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)', zIndex: 1050 }}>
           <div className="modal-dialog modal-dialog-centered">
