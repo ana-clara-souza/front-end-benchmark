@@ -1,28 +1,57 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 
 import Navbar from '../../components/Navbar';
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'filtros' | 'graficos'>('filtros');
-  const [comparisonMode, setComparisonMode] = useState<'experimento' | 'modelo'>('experimento');
+  interface ExperimentInfo {
+    _id?: string;
+    nome?: string;
+    key?: string;
+    chave?: string;
+    id?: string;
+    modelo?: string;
+    model?: string;
+    dataset?: string;
+    device?: string;
+    servico?: string;
+  }
 
-  const [selectedCharts, setSelectedCharts] = useState<string[]>([]);
-  const [selectedExperiments, setSelectedExperiments] = useState<Record<string, any[]>>({
-    chart1: [],
-    chart2: [],
-    chart3: [],
-    chart4: []
+  const [selectedCharts, setSelectedCharts] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('benchmark_filters');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          return parsed.selectedCharts || [];
+        } catch { }
+      }
+    }
+    return [];
   });
 
-  const [selectedModels, setSelectedModels] = useState<Record<string, string[]>>({
-    chart1: [],
-    chart2: [],
-    chart3: [],
-    chart4: []
+  const [selectedExperiments, setSelectedExperiments] = useState<Record<string, string[]>>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('benchmark_filters');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          return parsed.selectedExperiments || {
+            chart1: [],
+            chart2: [],
+            chart3: [],
+            chart4: []
+          };
+        } catch { }
+      }
+    }
+    return {
+      chart1: [],
+      chart2: [],
+      chart3: [],
+      chart4: []
+    };
   });
 
   const [chartImages, setChartImages] = useState<Record<string, string | null>>({
@@ -38,10 +67,11 @@ export default function DashboardPage() {
     chart4: false
   });
 
-  const [myExperiments, setMyExperiments] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<'filtros' | 'graficos'>('filtros');
+
+  const [myExperiments, setMyExperiments] = useState<ExperimentInfo[]>([]);
   const [loadingExperiments, setLoadingExperiments] = useState(false);
 
-  const [selectedSingleExperiment, setSelectedSingleExperiment] = useState<string>('');
   const availableModels = ['ResNet50', 'MobileNetV2', 'VGG16'];
 
   const [generatedKey, setGeneratedKey] = useState<string | null>(null);
@@ -49,9 +79,44 @@ export default function DashboardPage() {
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [keyError, setKeyError] = useState<string | null>(null);
 
-  const [dataset, setDataset] = useState('deepweeds');
-  const [device, setDevice] = useState('Slow-end');
-  const [model, setModel] = useState('ResNet50');
+  const [dataset, setDataset] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('benchmark_filters');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          return parsed.dataset || 'deepweeds';
+        } catch { }
+      }
+    }
+    return 'deepweeds';
+  });
+
+  const [device, setDevice] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('benchmark_filters');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          return parsed.device || 'Slow-end';
+        } catch { }
+      }
+    }
+    return 'Slow-end';
+  });
+
+  const [model, setModel] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('benchmark_filters');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          return parsed.model || 'ResNet50';
+        } catch { }
+      }
+    }
+    return 'ResNet50';
+  });
 
   const chartLimits: Record<string, number> = {
     chart1: 6,
@@ -110,7 +175,7 @@ export default function DashboardPage() {
     if (!token) return;
     setLoadingExperiments(true);
     try {
-      const response = await fetch('https://api-ic-mutt.onrender.com/api/experimentos/meus-experimentos', {
+      const response = await fetch('https://api-ic-mutt.onrender.com/api/experimentos/meus-experimentos/info', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -142,16 +207,12 @@ export default function DashboardPage() {
           ...prevExps,
           [chart]: []
         }));
-        setSelectedModels((prevModels) => ({
-          ...prevModels,
-          [chart]: []
-        }));
       }
       return nextCharts;
     });
   };
 
-  const handleExperimentChange = (chart: string, id: any) => {
+  const handleExperimentChange = (chart: string, id: string) => {
     setSelectedExperiments((prev) => {
       const currentList = prev[chart] || [];
       const limit = chartLimits[chart] || 6;
@@ -172,36 +233,9 @@ export default function DashboardPage() {
     });
   };
 
-  const handleModelChange = (chart: string, modelName: string) => {
-    setSelectedModels((prev) => {
-      const currentList = prev[chart] || [];
-      const limit = chartLimits[chart] || 6;
-      if (currentList.includes(modelName)) {
-        return {
-          ...prev,
-          [chart]: currentList.filter((m) => m !== modelName)
-        };
-      } else {
-        if (currentList.length >= limit) {
-          return prev;
-        }
-        return {
-          ...prev,
-          [chart]: [...currentList, modelName]
-        };
-      }
-    });
-  };
-
   const fetchCharts = async (
     charts = selectedCharts,
-    experiments = selectedExperiments,
-    ds = dataset,
-    dev = device,
-    mod = model,
-    compMode = comparisonMode,
-    singleExp = selectedSingleExperiment,
-    selModels = selectedModels
+    experiments = selectedExperiments
   ) => {
     if (charts.length === 0) return;
 
@@ -215,23 +249,10 @@ export default function DashboardPage() {
       return next;
     });
 
-    const formatFilterArray = (arr: any[]) => {
-      return `[${arr.join(', ')}]`;
-    };
-
     const fetchPromises = charts.map(async (chart) => {
-      let filtersPayload: any = {};
-
-      if (compMode === 'modelo') {
-        filtersPayload = {
-          modelo: formatFilterArray(selModels[chart] || []),
-          dataset: formatFilterArray([ds])
-        };
-      } else {
-        filtersPayload = {
-          _id: (experiments[chart] || []).join(', ')
-        };
-      }
+      const filtersPayload = {
+        _id: (experiments[chart] || []).join(', ')
+      };
 
       const payload = {
         charts: [chart],
@@ -298,35 +319,24 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
-    const saved = localStorage.getItem('benchmark_filters');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.selectedCharts) setSelectedCharts(parsed.selectedCharts);
-        if (parsed.selectedExperiments) setSelectedExperiments(parsed.selectedExperiments);
-        if (parsed.dataset) setDataset(parsed.dataset);
-        if (parsed.device) setDevice(parsed.device);
-        if (parsed.model) setModel(parsed.model);
-        if (parsed.comparisonMode) setComparisonMode(parsed.comparisonMode);
-        if (parsed.selectedSingleExperiment) setSelectedSingleExperiment(parsed.selectedSingleExperiment);
-        if (parsed.selectedModels) setSelectedModels(parsed.selectedModels);
-
-        fetchCharts(
-          parsed.selectedCharts || [],
-          parsed.selectedExperiments || { chart1: [], chart2: [], chart3: [], chart4: [] },
-          parsed.dataset || 'deepweeds',
-          parsed.device || 'Slow-end',
-          parsed.model || 'ResNet50',
-          parsed.comparisonMode || 'experimento',
-          parsed.selectedSingleExperiment || '',
-          parsed.selectedModels || { chart1: [], chart2: [], chart3: [], chart4: [] }
-        );
-        setActiveTab('graficos');
-      } catch (e) {
-        console.error('Erro ao ler filtros do localStorage no Dashboard:', e);
+    const loadAndFetch = async () => {
+      const saved = localStorage.getItem('benchmark_filters');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          await fetchCharts(
+            parsed.selectedCharts || [],
+            parsed.selectedExperiments || { chart1: [], chart2: [], chart3: [], chart4: [] }
+          );
+          setActiveTab('graficos');
+        } catch (e) {
+          console.error('Erro ao ler filtros do localStorage no Dashboard:', e);
+        }
       }
-    }
-    fetchMyExperiments();
+      await fetchMyExperiments();
+    };
+    loadAndFetch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
 
@@ -337,21 +347,12 @@ export default function DashboardPage() {
       selectedExperiments,
       dataset,
       device,
-      model,
-      comparisonMode,
-      selectedSingleExperiment,
-      selectedModels
+      model
     };
     localStorage.setItem('benchmark_filters', JSON.stringify(filters));
     fetchCharts(
       selectedCharts,
-      selectedExperiments,
-      dataset,
-      device,
-      model,
-      comparisonMode,
-      selectedSingleExperiment,
-      selectedModels
+      selectedExperiments
     );
     setActiveTab('graficos');
   };
@@ -416,70 +417,6 @@ export default function DashboardPage() {
 
         {activeTab === 'filtros' ? (
           <div>
-            <div className="comparison-toggle-container">
-              <span className="comparison-toggle-label">Tipo de Comparação</span>
-              <div className="comparison-toggle">
-                <button
-                  type="button"
-                  className={`comparison-btn ${comparisonMode === 'experimento' ? 'active' : ''}`}
-                  onClick={() => setComparisonMode('experimento')}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-1">
-                    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
-                  </svg>
-                  Por Experimento
-                </button>
-                <button
-                  type="button"
-                  className={`comparison-btn ${comparisonMode === 'modelo' ? 'active' : ''}`}
-                  onClick={() => setComparisonMode('modelo')}
-                >
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="me-1">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <circle cx="12" cy="12" r="4"></circle>
-                    <line x1="12" y1="2" x2="12" y2="4"></line>
-                    <line x1="12" y1="20" x2="12" y2="22"></line>
-                    <line x1="2" y1="12" x2="4" y2="12"></line>
-                    <line x1="20" y1="12" x2="22" y2="12"></line>
-                  </svg>
-                  Por Modelo
-                </button>
-              </div>
-            </div>
-
-            {comparisonMode === 'modelo' && (
-              <div className="single-exp-select-container">
-                <h5>Selecione o Experimento</h5>
-                {loadingExperiments ? (
-                  <div className="d-flex align-items-center gap-2 py-2">
-                    <span className="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
-                    <span className="text-muted small">Buscando experimentos...</span>
-                  </div>
-                ) : myExperiments.length === 0 ? (
-                  <p className="text-muted small mb-0">Nenhum experimento encontrado. Gere uma chave para começar.</p>
-                ) : (
-                  <div className="d-flex flex-wrap gap-2">
-                    {myExperiments.map((exp) => {
-                      const expId = exp._id || exp.key || exp.chave || exp.id || exp;
-                      const expDisplay = expId;
-                      const isSelected = selectedSingleExperiment === expId;
-                      return (
-                        <button
-                          key={String(expId)}
-                          type="button"
-                          className={`exp-chip ${isSelected ? 'selected' : ''}`}
-                          onClick={() => setSelectedSingleExperiment(String(expId))}
-                          title={String(expDisplay)}
-                        >
-                          {String(expDisplay)}
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            )}
-
             <div className="charts-grid">
               {Object.keys(chartTitles).map((chartKey) => {
                 const isSelected = selectedCharts.includes(chartKey);
@@ -508,77 +445,81 @@ export default function DashboardPage() {
 
                     {isSelected && (
                       <div className="experiments-section">
-                        {comparisonMode === 'experimento' ? (
-                          <>
-                            <div className="experiments-title">
-                              <span>Selecione os experimentos para comparar:</span>
-                              <span className="experiments-count">{currentSelectedCount}/{limit}</span>
-                            </div>
-                            {loadingExperiments ? (
-                              <div className="d-flex align-items-center gap-2 py-2">
-                                <span className="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
-                                <span className="text-muted small">Buscando experimentos...</span>
-                              </div>
-                            ) : myExperiments.length === 0 ? (
-                              <div className="small text-muted py-2">
-                                Nenhum experimento encontrado. Gere uma chave para começar.
-                              </div>
-                            ) : (
-                              <div className="chips-container">
-                                {myExperiments.map((exp) => {
-                                  const expId = exp._id || exp.key || exp.chave || exp.id || exp;
-                                  const expDisplay = expId;
-                                  const isExpChecked = selectedExperiments[chartKey]?.includes(expId) || false;
-                                  const isLimitReached = !isExpChecked && currentSelectedCount >= limit;
-
-                                  return (
-                                    <button
-                                      key={String(expId)}
-                                      type="button"
-                                      className={`exp-chip ${isExpChecked ? 'selected' : ''}`}
-                                      disabled={isLimitReached}
-                                      onClick={() => handleExperimentChange(chartKey, expId)}
-                                      title={String(expDisplay)}
-                                    >
-                                      {String(expDisplay)}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </>
+                        <div className="experiments-title">
+                          <span>Selecione os experimentos para comparar:</span>
+                          <span className="experiments-count">{currentSelectedCount}/{limit}</span>
+                        </div>
+                        {loadingExperiments ? (
+                          <div className="d-flex align-items-center gap-2 py-2">
+                            <span className="spinner-border spinner-border-sm text-primary" role="status" aria-hidden="true"></span>
+                            <span className="text-muted small">Buscando experimentos...</span>
+                          </div>
+                        ) : myExperiments.length === 0 ? (
+                          <div className="small text-muted py-2">
+                            Nenhum experimento encontrado. Gere uma chave para começar.
+                          </div>
                         ) : (
-                          <>
-                            <div className="experiments-title">
-                              <span>Selecione os modelos para comparar:</span>
-                              <span className="experiments-count">{(selectedModels[chartKey]?.length || 0)}/{limit}</span>
-                            </div>
-                            {!selectedSingleExperiment ? (
-                              <div className="small text-muted py-2">
-                                Selecione um experimento acima primeiro.
-                              </div>
-                            ) : (
-                              <div className="chips-container">
-                                {availableModels.map((modName) => {
-                                  const isModelChecked = selectedModels[chartKey]?.includes(modName) || false;
-                                  const isLimitReached = !isModelChecked && (selectedModels[chartKey]?.length || 0) >= limit;
+                          <div className="chips-container">
+                            {myExperiments.map((exp) => {
+                              const expId = String(exp._id || exp.key || exp.chave || exp.id || '');
 
-                                  return (
-                                    <button
-                                      key={modName}
-                                      type="button"
-                                      className={`exp-chip ${isModelChecked ? 'selected' : ''}`}
-                                      disabled={isLimitReached}
-                                      onClick={() => handleModelChange(chartKey, modName)}
-                                      title={modName}
-                                    >
-                                      {modName}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </>
+                              let expDisplay = '';
+                              if (typeof exp === 'object' && exp !== null) {
+                                const identifier = exp.nome || exp._id || exp.key || exp.chave || exp.id;
+                                const details = [exp.modelo || exp.model, exp.dataset, exp.device].filter(Boolean).join(' | ');
+                                expDisplay = details ? `${identifier} (${details})` : String(identifier);
+                              } else {
+                                expDisplay = String(exp);
+                              }
+
+                              const isExpChecked = selectedExperiments[chartKey]?.includes(expId) || false;
+                              const isLimitReached = !isExpChecked && currentSelectedCount >= limit;
+
+                              return (
+                                <button
+                                  key={String(expId)}
+                                  type="button"
+                                  className={`exp-chip ${isExpChecked ? 'selected' : ''}`}
+                                  disabled={isLimitReached}
+                                  onClick={() => handleExperimentChange(chartKey, expId)}
+                                  title={String(expDisplay)}
+                                >
+                                  {String(expDisplay)}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+
+                        {/* Detalhes dos experimentos selecionados */}
+                        {selectedExperiments[chartKey] && selectedExperiments[chartKey].length > 0 && (
+                          <div className="mt-3 p-3 bg-light rounded-3 border">
+                            <span className="fw-semibold text-dark d-block mb-2 small text-uppercase tracking-wider" style={{ fontSize: '11px' }}>
+                              Detalhes dos experimentos selecionados
+                            </span>
+                            <div className="d-flex flex-column gap-2">
+                              {selectedExperiments[chartKey].map((id) => {
+                                const expObj = myExperiments.find((e) => String(e._id || e.key || e.chave || e.id || '') === id);
+                                if (!expObj) return null;
+                                return (
+                                  <div key={id} className="d-flex align-items-center justify-content-between flex-wrap gap-2 p-2 bg-white rounded border small">
+                                    <span className="fw-medium text-secondary">{expObj.nome || id}</span>
+                                    <div className="d-flex gap-2">
+                                      <span className="badge bg-light text-dark border">
+                                        Dataset: {expObj.dataset || 'N/A'}
+                                      </span>
+                                      <span className="badge bg-light text-dark border">
+                                        Serviço: {expObj.servico || expObj.device || 'N/A'}
+                                      </span>
+                                      <span className="badge bg-light text-dark border">
+                                        Modelo: {expObj.modelo || expObj.model || 'N/A'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
                         )}
                       </div>
                     )}
@@ -620,23 +561,21 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {comparisonMode === 'experimento' && (
-                <div className="param-card">
-                  <h5 className="param-title">Modelo</h5>
-                  <div className="segmented-control">
-                    {availableModels.map((mod) => (
-                      <button
-                        key={mod}
-                        type="button"
-                        className={`segment-btn ${model === mod ? 'active' : ''}`}
-                        onClick={() => setModel(mod)}
-                      >
-                        {mod}
-                      </button>
-                    ))}
-                  </div>
+              <div className="param-card">
+                <h5 className="param-title">Modelo</h5>
+                <div className="segmented-control">
+                  {availableModels.map((mod) => (
+                    <button
+                      key={mod}
+                      type="button"
+                      className={`segment-btn ${model === mod ? 'active' : ''}`}
+                      onClick={() => setModel(mod)}
+                    >
+                      {mod}
+                    </button>
+                  ))}
                 </div>
-              )}
+              </div>
             </div>
 
             <div className="apply-section">
