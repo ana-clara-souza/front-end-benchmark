@@ -13,6 +13,12 @@ export default function Navbar({
 }: NavbarProps) {
   const router = useRouter();
 
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    router.push('/');
+  };
+
   return (
     <>
       {/* NAVBAR */}
@@ -23,13 +29,13 @@ export default function Navbar({
             Benchmark Web
           </span>
 
-          <div className="ms-auto">
+          <div className="ms-auto dropdown">
             <button
               type="button"
               className="btn border-0 d-flex align-items-center gap-2"
               style={{ background: "transparent" }}
-              data-bs-toggle="modal"
-              data-bs-target="#profileModal"
+              data-bs-toggle="dropdown"
+              aria-expanded="false"
             >
               <div
                 className="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center"
@@ -46,6 +52,29 @@ export default function Navbar({
                 {userName}
               </span>
             </button>
+
+            <ul className="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+              <li>
+                <button
+                  className="dropdown-item"
+                  type="button"
+                  data-bs-toggle="modal"
+                  data-bs-target="#profileModal"
+                >
+                  Configurações do Perfil
+                </button>
+              </li>
+              <li><hr className="dropdown-divider" /></li>
+              <li>
+                <button
+                  className="dropdown-item text-danger fw-semibold"
+                  type="button"
+                  onClick={handleLogout}
+                >
+                  Sair
+                </button>
+              </li>
+            </ul>
           </div>
         </div>
       </nav>
@@ -73,7 +102,7 @@ export default function Navbar({
             </div>
 
             <div className="modal-body">
-              <form>
+              <form onSubmit={(e) => e.preventDefault()}>
                 {/* NOME */}
 
                 <div className="mb-3">
@@ -85,6 +114,7 @@ export default function Navbar({
                     type="text"
                     className="form-control"
                     placeholder="Digite seu nome"
+                    defaultValue={userName}
                   />
                 </div>
 
@@ -125,9 +155,22 @@ export default function Navbar({
 
                 <button
                   type="submit"
-                  className="btn btn-primary w-100"
+                  className="btn btn-primary w-100 mb-3"
                 >
                   Salvar alterações
+                </button>
+
+                <hr />
+
+                {/* LOGOUT */}
+
+                <button
+                  type="button"
+                  className="btn btn-outline-danger w-100 fw-semibold"
+                  data-bs-dismiss="modal"
+                  onClick={handleLogout}
+                >
+                  Sair da Conta
                 </button>
               </form>
             </div>

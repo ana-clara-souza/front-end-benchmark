@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function Login() {
   const router = useRouter();
@@ -83,9 +84,9 @@ export default function Login() {
               />
             </div>
 
-            <a href="/recuperar-senha" className="small d-block mb-3">
+            <Link href="/recuperar-senha" className="small d-block mb-3">
               Esqueceu a senha?
-            </a>
+            </Link>
 
             {error && (
               <div className="alert alert-danger py-2 px-3 small mb-3" role="alert">
@@ -113,7 +114,7 @@ export default function Login() {
             </button>
 
             <p className="small">
-              Não tem uma conta? <a href="/cadastro">Crie uma</a>
+              Não tem uma conta? <Link href="/cadastro">Crie uma</Link>
             </p>
           </form>
         </div>

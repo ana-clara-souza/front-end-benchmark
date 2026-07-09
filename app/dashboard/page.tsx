@@ -1,10 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 import Navbar from '../../components/Navbar';
 
 export default function DashboardPage() {
+  const router = useRouter();
+
   interface ExperimentInfo {
     _id?: string;
     nome?: string;
@@ -18,40 +21,13 @@ export default function DashboardPage() {
     servico?: string;
   }
 
-  const [selectedCharts, setSelectedCharts] = useState<string[]>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('benchmark_filters');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          return parsed.selectedCharts || [];
-        } catch { }
-      }
-    }
-    return [];
-  });
+  const [selectedCharts, setSelectedCharts] = useState<string[]>([]);
 
-  const [selectedExperiments, setSelectedExperiments] = useState<Record<string, string[]>>(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('benchmark_filters');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          return parsed.selectedExperiments || {
-            chart1: [],
-            chart2: [],
-            chart3: [],
-            chart4: []
-          };
-        } catch { }
-      }
-    }
-    return {
-      chart1: [],
-      chart2: [],
-      chart3: [],
-      chart4: []
-    };
+  const [selectedExperiments, setSelectedExperiments] = useState<Record<string, string[]>>({
+    chart1: [],
+    chart2: [],
+    chart3: [],
+    chart4: []
   });
 
   const [chartImages, setChartImages] = useState<Record<string, string | null>>({
@@ -79,44 +55,12 @@ export default function DashboardPage() {
   const [showKeyModal, setShowKeyModal] = useState(false);
   const [keyError, setKeyError] = useState<string | null>(null);
 
-  const [dataset, setDataset] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('benchmark_filters');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          return parsed.dataset || 'deepweeds';
-        } catch { }
-      }
-    }
-    return 'deepweeds';
-  });
+  const [dataset, setDataset] = useState('deepweeds');
+  const [device, setDevice] = useState('Slow-end');
+  const [model, setModel] = useState('ResNet50');
 
-  const [device, setDevice] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('benchmark_filters');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          return parsed.device || 'Slow-end';
-        } catch { }
-      }
-    }
-    return 'Slow-end';
-  });
-
-  const [model, setModel] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('benchmark_filters');
-      if (saved) {
-        try {
-          const parsed = JSON.parse(saved);
-          return parsed.model || 'ResNet50';
-        } catch { }
-      }
-    }
-    return 'ResNet50';
-  });
+  const [userName, setUserName] = useState('Usuário');
+  const [userInitials, setUserInitials] = useState('U');
 
   const chartLimits: Record<string, number> = {
     chart1: 6,
@@ -175,7 +119,7 @@ export default function DashboardPage() {
     if (!token) return;
     setLoadingExperiments(true);
     try {
-      const response = await fetch('https://api-ic-mutt.onrender.com/api/experimentos/meus-experimentos/info', {
+      const response = await fetch('https://api-ic-mutt.onrender.com/api/experimentos/info', {
         method: 'GET',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -235,7 +179,10 @@ export default function DashboardPage() {
 
   const fetchCharts = async (
     charts = selectedCharts,
-    experiments = selectedExperiments
+    experiments = selectedExperiments,
+    currentDataset = dataset,
+    currentDevice = device,
+    currentModel = model
   ) => {
     if (charts.length === 0) return;
 
@@ -250,13 +197,20 @@ export default function DashboardPage() {
     });
 
     const fetchPromises = charts.map(async (chart) => {
-      const filtersPayload = {
-        _id: (experiments[chart] || []).join(', ')
-      };
+      const selectedExpIds = experiments[chart] || [];
 
       const payload = {
         charts: [chart],
-        filters: filtersPayload,
+        scriptFilters: {
+          _id: selectedExpIds,
+          modelo: currentModel,
+          dataset: currentDataset
+        },
+        mpbileFilters: {
+          _id: selectedExpIds,
+          device: currentDevice,
+          dataset: currentDataset
+        }
       };
 
       console.log('Payload enviado para api/charts:', payload);
@@ -296,7 +250,27 @@ export default function DashboardPage() {
       const next = { ...prev };
       results.forEach((res) => {
         if ('data' in res && res.data) {
-          const imgData = res.data[res.chart];
+          const chartVal = (res.data?.mobile?.[res.chart]) || (res.data?.script?.[res.chart]);
+          
+          let imgData: string | null = null;
+          if (chartVal) {
+            if (typeof chartVal === 'string') {
+              imgData = chartVal;
+            } else if (typeof chartVal === 'object') {
+              const base64 = chartVal.base64 || chartVal.image || chartVal.img || chartVal.data;
+              if (typeof base64 === 'string') {
+                imgData = base64;
+              } else {
+                for (const key of Object.keys(chartVal)) {
+                  if (typeof chartVal[key] === 'string' && (chartVal[key].startsWith('data:image') || chartVal[key].length > 100)) {
+                    imgData = chartVal[key];
+                    break;
+                  }
+                }
+              }
+            }
+          }
+
           if (imgData) {
             next[res.chart] = imgData.startsWith('data:') ? imgData : `data:image/png;base64,${imgData}`;
           } else {
@@ -319,20 +293,72 @@ export default function DashboardPage() {
   };
 
   useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/');
+      return;
+    }
+
     const loadAndFetch = async () => {
+      // Defer execution to avoid synchronous state updates in effect body
+      await Promise.resolve();
+
+      // Load user profile information
+      const savedUser = localStorage.getItem('user');
+      if (savedUser) {
+        try {
+          const user = JSON.parse(savedUser);
+          const name = user.nomeCompleto || user.name || 'Usuário';
+          setUserName(name);
+          
+          // Calculate initials
+          const parts = name.trim().split(/\s+/);
+          let initials = 'U';
+          if (parts.length > 0) {
+            if (parts.length === 1) {
+              initials = parts[0].charAt(0).toUpperCase();
+            } else {
+              initials = (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+            }
+          }
+          setUserInitials(initials);
+        } catch (e) {
+          console.error('Erro ao ler usuário do localStorage no Dashboard:', e);
+        }
+      }
+
       const saved = localStorage.getItem('benchmark_filters');
+      let charts: string[] = [];
+      let experiments: Record<string, string[]> = { chart1: [], chart2: [], chart3: [], chart4: [] };
+      let currentDataset = 'deepweeds';
+      let currentDevice = 'Slow-end';
+      let currentModel = 'ResNet50';
+
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          await fetchCharts(
-            parsed.selectedCharts || [],
-            parsed.selectedExperiments || { chart1: [], chart2: [], chart3: [], chart4: [] }
-          );
+          charts = parsed.selectedCharts || [];
+          experiments = parsed.selectedExperiments || { chart1: [], chart2: [], chart3: [], chart4: [] };
+          setSelectedCharts(charts);
+          setSelectedExperiments(experiments);
+          if (parsed.dataset) {
+            currentDataset = parsed.dataset;
+            setDataset(parsed.dataset);
+          }
+          if (parsed.device) {
+            currentDevice = parsed.device;
+            setDevice(parsed.device);
+          }
+          if (parsed.model) {
+            currentModel = parsed.model;
+            setModel(parsed.model);
+          }
           setActiveTab('graficos');
         } catch (e) {
           console.error('Erro ao ler filtros do localStorage no Dashboard:', e);
         }
       }
+      await fetchCharts(charts, experiments, currentDataset, currentDevice, currentModel);
       await fetchMyExperiments();
     };
     loadAndFetch();
@@ -352,14 +378,17 @@ export default function DashboardPage() {
     localStorage.setItem('benchmark_filters', JSON.stringify(filters));
     fetchCharts(
       selectedCharts,
-      selectedExperiments
+      selectedExperiments,
+      dataset,
+      device,
+      model
     );
     setActiveTab('graficos');
   };
 
   return (
     <main className="dashboard-page">
-      <Navbar userName="Ana" initials="AS" />
+      <Navbar userName={userName} initials={userInitials} />
 
       <section className="dashboard-content">
         <div className="dashboard-header">
