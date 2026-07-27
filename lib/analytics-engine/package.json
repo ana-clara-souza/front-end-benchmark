@@ -1,0 +1,34 @@
+{
+  "name": "project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "node --experimental-vm-modules node_modules/.bin/jest"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "d3-scale-chromatic": "^3.1.0",
+    "jspdf": "^4.2.1",
+    "jstat": "^1.9.6",
+    "plotly.js-dist-min": "^3.7.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-plotly.js": "^4.0.0",
+    "xlsx": "^0.18.5",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@babel/core": "^8.0.1",
+    "@babel/preset-react": "^8.0.1",
+    "esbuild": "^0.28.1",
+    "jest": "^30.4.2",
+    "typescript": "^7.0.2"
+  },
+  "type": "module"
+}

@@ -1,0 +1,346 @@
+{
+  "chart1": [
+    {
+      "dataset": "DeepWeeds",
+      "n": 2,
+      "mean": 91.0,
+      "std": 1.41,
+      "min": 90.0,
+      "q1": 90.5,
+      "median": 91.0,
+      "q3": 91.5,
+      "max": 92.0,
+      "iqr": 1.0,
+      "whisker_low": 90.0,
+      "whisker_high": 92.0,
+      "outliers": []
+    },
+    {
+      "dataset": "Weed6c",
+      "n": 6,
+      "mean": 199.66,
+      "std": 101.73,
+      "min": 126.16,
+      "q1": 131.23,
+      "median": 141.0,
+      "q3": 282.91,
+      "max": 331.6,
+      "iqr": 151.68,
+      "whisker_low": 126.16,
+      "whisker_high": 331.6,
+      "outliers": []
+    }
+  ],
+  "chart2": [
+    {
+      "dataset": "DeepWeeds",
+      "modelo": "MobileNetV2",
+      "device": "Pixel6",
+      "experimento_id": "exp-004",
+      "n": 2,
+      "mean": 91.0,
+      "std": 1.41,
+      "ci_lower": 78.29,
+      "ci_upper": 103.71
+    },
+    {
+      "dataset": "Weed6c",
+      "modelo": "ResNet-50",
+      "device": "2312CRNCCL",
+      "experimento_id": "exp-001",
+      "n": 2,
+      "mean": 127.23,
+      "std": 1.51,
+      "ci_lower": 113.64,
+      "ci_upper": 140.82
+    },
+    {
+      "dataset": "Weed6c",
+      "modelo": "ResNet-50",
+      "device": "2312CRNCCL",
+      "experimento_id": "exp-003",
+      "n": 2,
+      "mean": 141.0,
+      "std": 1.41,
+      "ci_lower": 128.29,
+      "ci_upper": 153.71
+    },
+    {
+      "dataset": "Weed6c",
+      "modelo": "ResNet-50",
+      "device": "SM-S908E",
+      "experimento_id": "exp-002",
+      "n": 2,
+      "mean": 330.74,
+      "std": 1.21,
+      "ci_lower": 319.83,
+      "ci_upper": 341.65
+    }
+  ],
+  "chart3": [
+    {
+      "modelo": "MobileNetV2",
+      "device": "Pixel6",
+      "dataset": "DeepWeeds",
+      "experimento_id": "exp-004",
+      "n": 2,
+      "mean": 81.0,
+      "std": 1.41,
+      "ci_lower": 68.29,
+      "ci_upper": 93.71
+    },
+    {
+      "modelo": "ResNet-50",
+      "device": "2312CRNCCL",
+      "dataset": "Weed6c",
+      "experimento_id": "exp-001",
+      "n": 2,
+      "mean": 2022.07,
+      "std": 16.45,
+      "ci_lower": 1874.31,
+      "ci_upper": 2169.83
+    },
+    {
+      "modelo": "ResNet-50",
+      "device": "2312CRNCCL",
+      "dataset": "Weed6c",
+      "experimento_id": "exp-003",
+      "n": 2,
+      "mean": 2090.0,
+      "std": 14.14,
+      "ci_lower": 1962.94,
+      "ci_upper": 2217.06
+    },
+    {
+      "modelo": "ResNet-50",
+      "device": "SM-S908E",
+      "dataset": "Weed6c",
+      "experimento_id": "exp-002",
+      "n": 2,
+      "mean": 149.07,
+      "std": 2.46,
+      "ci_lower": 126.98,
+      "ci_upper": 171.16
+    }
+  ],
+  "chart4": [
+    {
+      "modelo": "MobileNetV2",
+      "device": "Pixel6",
+      "dataset": "DeepWeeds",
+      "experimento_id": "exp-004",
+      "n": 2,
+      "ips_mean": 12.35,
+      "ips_ci_lower": 10.67,
+      "ips_ci_upper": 14.64
+    },
+    {
+      "modelo": "ResNet-50",
+      "device": "2312CRNCCL",
+      "dataset": "Weed6c",
+      "experimento_id": "exp-001",
+      "n": 2,
+      "ips_mean": 0.49,
+      "ips_ci_lower": 0.46,
+      "ips_ci_upper": 0.53
+    },
+    {
+      "modelo": "ResNet-50",
+      "device": "2312CRNCCL",
+      "dataset": "Weed6c",
+      "experimento_id": "exp-003",
+      "n": 2,
+      "ips_mean": 0.48,
+      "ips_ci_lower": 0.45,
+      "ips_ci_upper": 0.51
+    },
+    {
+      "modelo": "ResNet-50",
+      "device": "SM-S908E",
+      "dataset": "Weed6c",
+      "experimento_id": "exp-002",
+      "n": 2,
+      "ips_mean": 6.71,
+      "ips_ci_lower": 5.84,
+      "ips_ci_upper": 7.88
+    }
+  ],
+  "chart_metrics": [
+    {
+      "experimento_id": "exp-004",
+      "modelo": "MobileNetV2",
+      "dataset": "DeepWeeds",
+      "accuracy": 1.0,
+      "std_accuracy": 0.0,
+      "Precision": 1.0,
+      "Recall": 1.0,
+      "F1-score": 1.0,
+      "wP": 1.0,
+      "wR": 1.0,
+      "wF1": 1.0
+    },
+    {
+      "experimento_id": "exp-001",
+      "modelo": "ResNet-50",
+      "dataset": "Weed6c",
+      "accuracy": 0.5,
+      "std_accuracy": 0.5774,
+      "Precision": 0.5,
+      "Recall": 0.3333,
+      "F1-score": 0.3889,
+      "wP": 0.75,
+      "wR": 0.5,
+      "wF1": 0.5833
+    },
+    {
+      "experimento_id": "exp-002",
+      "modelo": "ResNet-50",
+      "dataset": "Weed6c",
+      "accuracy": 1.0,
+      "std_accuracy": 0.0,
+      "Precision": 1.0,
+      "Recall": 1.0,
+      "F1-score": 1.0,
+      "wP": 1.0,
+      "wR": 1.0,
+      "wF1": 1.0
+    },
+    {
+      "experimento_id": "exp-003",
+      "modelo": "ResNet-50",
+      "dataset": "Weed6c",
+      "accuracy": 0.5,
+      "std_accuracy": 0.7071,
+      "Precision": 0.25,
+      "Recall": 0.5,
+      "F1-score": 0.3333,
+      "wP": 0.25,
+      "wR": 0.5,
+      "wF1": 0.3333
+    }
+  ],
+  "chart_f1_heatmap": [
+    {
+      "dataset": "DeepWeeds",
+      "experimento_id": "exp-004",
+      "modelo": "MobileNetV2",
+      "class": 0,
+      "f1": 1.0
+    },
+    {
+      "dataset": "DeepWeeds",
+      "experimento_id": "exp-004",
+      "modelo": "MobileNetV2",
+      "class": 1,
+      "f1": 1.0
+    },
+    {
+      "dataset": "Weed6c",
+      "experimento_id": "exp-001",
+      "modelo": "ResNet-50",
+      "class": 0,
+      "f1": 0.5
+    },
+    {
+      "dataset": "Weed6c",
+      "experimento_id": "exp-001",
+      "modelo": "ResNet-50",
+      "class": 1,
+      "f1": 0.6667
+    },
+    {
+      "dataset": "Weed6c",
+      "experimento_id": "exp-002",
+      "modelo": "ResNet-50",
+      "class": 0,
+      "f1": 1.0
+    },
+    {
+      "dataset": "Weed6c",
+      "experimento_id": "exp-002",
+      "modelo": "ResNet-50",
+      "class": 1,
+      "f1": 1.0
+    },
+    {
+      "dataset": "Weed6c",
+      "experimento_id": "exp-003",
+      "modelo": "ResNet-50",
+      "class": 0,
+      "f1": 0.0
+    },
+    {
+      "dataset": "Weed6c",
+      "experimento_id": "exp-003",
+      "modelo": "ResNet-50",
+      "class": 1,
+      "f1": 0.6667
+    }
+  ],
+  "chart_pareto": [
+    {
+      "experimento_id": "exp-004",
+      "modelo": "MobileNetV2",
+      "dataset": "DeepWeeds",
+      "accuracy": 1.0,
+      "std_accuracy": 0.0,
+      "Precision": 1.0,
+      "Recall": 1.0,
+      "F1-score": 1.0,
+      "wP": 1.0,
+      "wR": 1.0,
+      "wF1": 1.0,
+      "device": "Pixel6",
+      "mean_inference_time": 80.0,
+      "is_pareto_optimal": true
+    },
+    {
+      "experimento_id": "exp-001",
+      "modelo": "ResNet-50",
+      "dataset": "Weed6c",
+      "accuracy": 0.5,
+      "std_accuracy": 0.5774,
+      "Precision": 0.5,
+      "Recall": 0.3333,
+      "F1-score": 0.3889,
+      "wP": 0.75,
+      "wR": 0.5,
+      "wF1": 0.5833,
+      "device": "2312CRNCCL",
+      "mean_inference_time": 2033.7,
+      "is_pareto_optimal": true
+    },
+    {
+      "experimento_id": "exp-002",
+      "modelo": "ResNet-50",
+      "dataset": "Weed6c",
+      "accuracy": 1.0,
+      "std_accuracy": 0.0,
+      "Precision": 1.0,
+      "Recall": 1.0,
+      "F1-score": 1.0,
+      "wP": 1.0,
+      "wR": 1.0,
+      "wF1": 1.0,
+      "device": null,
+      "mean_inference_time": null,
+      "is_pareto_optimal": false
+    },
+    {
+      "experimento_id": "exp-003",
+      "modelo": "ResNet-50",
+      "dataset": "Weed6c",
+      "accuracy": 0.5,
+      "std_accuracy": 0.7071,
+      "Precision": 0.25,
+      "Recall": 0.5,
+      "F1-score": 0.3333,
+      "wP": 0.25,
+      "wR": 0.5,
+      "wF1": 0.3333,
+      "device": "2312CRNCCL",
+      "mean_inference_time": 2100.0,
+      "is_pareto_optimal": false
+    }
+  ]
+}

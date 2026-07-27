@@ -7,7 +7,6 @@ import "bootstrap/dist/css/bootstrap.min.css";
 
 import "./cadastro/cadastro.css";
 import "./recuperar-senha/recuperar-senha.css";
-import "./dashboard/dashboard.css";
 
 import "../components/navbar.css";
 

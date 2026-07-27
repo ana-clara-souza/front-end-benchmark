@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -42,7 +41,7 @@ export default function Login() {
         localStorage.setItem('user', JSON.stringify(data.user));
       }
 
-      router.push('/dashboard');
+      router.push('/filtros');
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro ao conectar com o servidor.';
       setError(errorMessage);
@@ -52,88 +51,87 @@ export default function Login() {
   };
 
   return (
-    <div className="container-fluid vh-100 d-flex align-items-center px-5">
-      <div className="row w-100 align-items-center mx-0">
-
-        <div className="col-md-6 d-flex flex-column justify-content-center px-4">
-          <h2 className="fw-bold mb-4">Benchmark Web</h2>
-
-          <h4 className="fw-bold">Acesse sua conta</h4>
-          <p className="text-muted mb-4">Entre com suas credenciais</p>
-
-          <form onSubmit={handleSubmit}>
-            <div className="mb-3">
-              <label className="form-label fw-semibold">Email</label>
-              <input
-                type="email"
-                className="form-control"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-              />
-            </div>
-
-            <div className="mb-2">
-              <label className="form-label fw-semibold">Senha</label>
-              <input
-                type="password"
-                className="form-control"
-                value={senha}
-                onChange={(e) => setSenha(e.target.value)}
-                required
-              />
-            </div>
-
-            <Link href="/recuperar-senha" className="small d-block mb-3">
-              Esqueceu a senha?
-            </Link>
-
-            {error && (
-              <div className="alert alert-danger py-2 px-3 small mb-3" role="alert">
-                {error}
-              </div>
-            )}
-
-            <button
-              type="submit"
-              className="btn btn-primary w-100 mb-3 text-white text-decoration-none"
-              disabled={loading}
-            >
-              {loading ? (
-                <>
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                  Entrando...
-                </>
-              ) : (
-                'Entrar'
-              )}
-            </button>
-
-            <button type="button" className="btn btn-light w-100 border mb-3">
-              Faça login com o Google
-            </button>
-
-            <p className="small">
-              Não tem uma conta? <Link href="/cadastro">Crie uma</Link>
-            </p>
-          </form>
+    <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light px-3 py-5">
+      <div className="card border-0 shadow-sm rounded-4 p-4 p-sm-5" style={{ maxWidth: '420px', width: '100%' }}>
+        
+        {/* CABEÇALHO */}
+        <div className="text-center mb-4">
+          <h2 className="fw-bold text-dark fs-4 mb-1">Benchmark Web</h2>
+          <h3 className="fs-6 fw-bold text-secondary mb-1">Acesse sua conta</h3>
+          <p className="text-muted small mb-0">Entre com suas credenciais para continuar</p>
         </div>
 
-        <div className="col-md-6 d-none d-md-flex align-items-center justify-content-center px-4">
-          <div className="w-100 d-flex justify-content-center">
-            <div className="card p-2 shadow-sm imageCard">
-              <Image
-                src="/imagem.png"
-                width={500}
-                height={500}
-                className="img-fluid rounded loginImage"
-                alt="Imagem do login"
-                priority
-              />
-            </div>
+        {/* FORMULÁRIO */}
+        <form onSubmit={handleSubmit}>
+          {/* EMAIL */}
+          <div className="mb-3">
+            <label className="form-label fw-semibold small text-dark">Email Corporativo</label>
+            <input
+              type="email"
+              className="form-control"
+              placeholder="seuemail@institucional.br"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
           </div>
-        </div>
 
+          {/* SENHA */}
+          <div className="mb-3">
+            <div className="d-flex align-items-center justify-content-between mb-1">
+              <label className="form-label fw-semibold small text-dark mb-0">Senha</label>
+              <Link href="/recuperar-senha" className="text-decoration-none small text-primary fw-semibold">
+                Esqueceu a senha?
+              </Link>
+            </div>
+            <input
+              type="password"
+              className="form-control"
+              placeholder="Sua senha secreta"
+              value={senha}
+              onChange={(e) => setSenha(e.target.value)}
+              required
+            />
+          </div>
+
+          {/* ERRO */}
+          {error && (
+            <div className="alert alert-danger py-2 px-3 small mb-3 rounded-3" role="alert" style={{ fontSize: '13px' }}>
+              ⚠ {error}
+            </div>
+          )}
+
+          {/* BOTÃO */}
+          <button
+            type="submit"
+            className="btn btn-primary w-100 fw-semibold py-2 mt-2"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Entrando...
+              </>
+            ) : (
+              'Entrar'
+            )}
+          </button>
+
+          {/* DIVISOR E CADASTRO */}
+          <div className="text-center my-3 text-muted small position-relative">
+            <hr className="my-3" />
+            <span className="position-absolute top-50 start-50 translate-middle bg-white px-2 text-secondary">
+              ou
+            </span>
+          </div>
+
+          <p className="text-center small text-muted mb-0">
+            Não tem uma conta?{' '}
+            <Link href="/cadastro" className="text-decoration-none fw-semibold text-primary">
+              Crie uma agora
+            </Link>
+          </p>
+        </form>
       </div>
     </div>
   );
