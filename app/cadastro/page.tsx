@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import './cadastro.css';
 
 export default function Cadastro() {
   const [formData, setFormData] = useState({
@@ -59,17 +58,16 @@ export default function Cadastro() {
       });
 
       const data = await response.json();
-      console.log('Resposta de cadastro:', data);
 
       if (!response.ok) {
         throw new Error(data.message || 'Erro ao cadastrar usuário.');
       }
 
-      setMensagem('Cadastro realizado com sucesso! Verifique seu email. Redirecionando em 5 segundos...');
+      setMensagem('Cadastro realizado com sucesso! Verifique seu email. Redirecionando...');
 
       setTimeout(() => {
         window.location.href = '/';
-      }, 5000);
+      }, 4000);
 
       setFormData({
         nomeCompleto: '',
@@ -88,19 +86,27 @@ export default function Cadastro() {
   }
 
   return (
-    <main className="cadastro-page">
-      <section className="cadastro-left">
-        <div className="cadastro-form-box">
-          <h1 className="brand-title">Benchmark Web</h1>
+    <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light px-3 py-5">
+      <div className="card border-0 shadow-sm rounded-4 p-4 p-sm-5" style={{ maxWidth: '560px', width: '100%' }}>
+        
+        {/* CABEÇALHO */}
+        <div className="text-center mb-4">
+          <h2 className="fw-bold text-dark fs-4 mb-1">Benchmark Web</h2>
+          <h3 className="fs-6 fw-bold text-secondary mb-1">Crie sua conta</h3>
+          <p className="text-muted small mb-0">Preencha os dados abaixo para começar</p>
+        </div>
 
-          <h2 className="page-title">Crie sua conta</h2>
-          <p className="page-subtitle">Preencha os dados para começar</p>
-
-          <form className="cadastro-form" onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label>Nome Completo</label>
+        {/* FORMULÁRIO */}
+        <form onSubmit={handleSubmit}>
+          <div className="row g-3">
+            
+            {/* NOME COMPLETO */}
+            <div className="col-12">
+              <label className="form-label fw-semibold small text-dark mb-1">Nome Completo</label>
               <input
                 type="text"
+                className="form-control"
+                placeholder="Seu nome completo"
                 name="nomeCompleto"
                 value={formData.nomeCompleto}
                 onChange={handleChange}
@@ -108,10 +114,13 @@ export default function Cadastro() {
               />
             </div>
 
-            <div className="form-group">
-              <label>Email Institucional</label>
+            {/* EMAIL INSTITUCIONAL */}
+            <div className="col-12">
+              <label className="form-label fw-semibold small text-dark mb-1">Email Institucional</label>
               <input
                 type="email"
+                className="form-control"
+                placeholder="seuemail@institucional.br"
                 name="emailInstitucional"
                 value={formData.emailInstitucional}
                 onChange={handleChange}
@@ -119,10 +128,13 @@ export default function Cadastro() {
               />
             </div>
 
-            <div className="form-group">
-              <label>Instituição</label>
+            {/* INSTITUIÇÃO */}
+            <div className="col-12 col-md-6">
+              <label className="form-label fw-semibold small text-dark mb-1">Instituição</label>
               <input
                 type="text"
+                className="form-control"
+                placeholder="Ex: USP, UFRJ"
                 name="instituicao"
                 value={formData.instituicao}
                 onChange={handleChange}
@@ -130,10 +142,13 @@ export default function Cadastro() {
               />
             </div>
 
-            <div className="form-group">
-              <label>Laboratório</label>
+            {/* LABORATÓRIO */}
+            <div className="col-12 col-md-6">
+              <label className="form-label fw-semibold small text-dark mb-1">Laboratório</label>
               <input
                 type="text"
+                className="form-control"
+                placeholder="Ex: LabIA"
                 name="laboratorio"
                 value={formData.laboratorio}
                 onChange={handleChange}
@@ -141,11 +156,14 @@ export default function Cadastro() {
               />
             </div>
 
-            <div className="form-group">
-              <label>Senha</label>
-              <div className="password-input-wrapper">
+            {/* SENHA */}
+            <div className="col-12 col-md-6">
+              <label className="form-label fw-semibold small text-dark mb-1">Senha</label>
+              <div className="input-group">
                 <input
                   type={showSenha ? 'text' : 'password'}
+                  className="form-control"
+                  placeholder="Sua senha"
                   name="senha"
                   value={formData.senha}
                   onChange={handleChange}
@@ -153,30 +171,23 @@ export default function Cadastro() {
                 />
                 <button
                   type="button"
-                  className="toggle-password-btn"
+                  className="btn btn-outline-secondary"
                   onClick={() => setShowSenha(!showSenha)}
-                  aria-label={showSenha ? "Esconder senha" : "Mostrar senha"}
+                  aria-label={showSenha ? 'Esconder senha' : 'Mostrar senha'}
                 >
-                  {showSenha ? (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                      <line x1="1" y1="1" x2="23" y2="23"></line>
-                    </svg>
-                  ) : (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                  )}
+                  {showSenha ? '🙈' : '👁️'}
                 </button>
               </div>
             </div>
 
-            <div className="form-group">
-              <label>Confirmar Senha</label>
-              <div className="password-input-wrapper">
+            {/* CONFIRMAR SENHA */}
+            <div className="col-12 col-md-6">
+              <label className="form-label fw-semibold small text-dark mb-1">Confirmar Senha</label>
+              <div className="input-group">
                 <input
                   type={showConfirmarSenha ? 'text' : 'password'}
+                  className="form-control"
+                  placeholder="Repita a senha"
                   name="confirmarSenha"
                   value={formData.confirmarSenha}
                   onChange={handleChange}
@@ -184,96 +195,64 @@ export default function Cadastro() {
                 />
                 <button
                   type="button"
-                  className="toggle-password-btn"
+                  className="btn btn-outline-secondary"
                   onClick={() => setShowConfirmarSenha(!showConfirmarSenha)}
-                  aria-label={showConfirmarSenha ? "Esconder confirmação de senha" : "Mostrar confirmação de senha"}
+                  aria-label={showConfirmarSenha ? 'Esconder confirmação' : 'Mostrar confirmação'}
                 >
-                  {showConfirmarSenha ? (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                      <line x1="1" y1="1" x2="23" y2="23"></line>
-                    </svg>
-                  ) : (
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
-                    </svg>
-                  )}
+                  {showConfirmarSenha ? '🙈' : '👁️'}
                 </button>
               </div>
             </div>
 
-            {mensagem && (
-              <p style={{ color: 'green', marginTop: '10px' }}>
-                {mensagem}
-              </p>
+          </div>
+
+          {/* MENSAGEM DE SUCESSO */}
+          {mensagem && (
+            <div className="alert alert-success py-2 px-3 small mt-3 mb-0 rounded-3" role="alert" style={{ fontSize: '13px' }}>
+              ✓ {mensagem}
+            </div>
+          )}
+
+          {/* MENSAGEM DE ERRO */}
+          {erro && (
+            <div className="alert alert-danger py-2 px-3 small mt-3 mb-0 rounded-3" role="alert" style={{ fontSize: '13px' }}>
+              ⚠️ {erro}
+            </div>
+          )}
+
+          {/* BOTÃO CADASTRAR */}
+          <button
+            type="submit"
+            className="btn btn-primary w-100 fw-semibold py-2 mt-4"
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Cadastrando...
+              </>
+            ) : (
+              'Cadastrar'
             )}
+          </button>
 
-            {erro && (
-              <p style={{ color: 'red', marginTop: '10px' }}>
-                {erro}
-              </p>
-            )}
-
-            <button type="submit" className="btn-cadastrar" disabled={loading}>
-              {loading ? 'Cadastrando...' : 'Cadastrar'}
-            </button>
-
-            <p className="login-link">
-              Já possui uma conta? <Link href="/">Faça login</Link>
-            </p>
-          </form>
-        </div>
-      </section>
-
-      <section className="cadastro-right">
-        <div className="circle-bg"></div>
-
-        <div className="steps-box">
-          <h2>COMO FUNCIONA</h2>
-
-          <div className="step-item">
-            <div className="step-number">1</div>
-            <div>
-              <h3>Crie sua conta</h3>
-              <p>Preencha seus dados</p>
-            </div>
+          {/* DIVISOR E LINK DE LOGIN */}
+          <div className="text-center my-3 text-muted small position-relative">
+            <hr className="my-3" />
+            <span className="position-absolute top-50 start-50 translate-middle bg-white px-2 text-secondary">
+              ou
+            </span>
           </div>
 
-          <div className="step-item">
-            <div className="step-number">2</div>
-            <div>
-              <h3>Verifique seu email</h3>
-              <p>Entre no gmail e clique no link de verificação</p>
-            </div>
-          </div>
+          <p className="text-center small text-muted mb-0">
+            Já possui uma conta?{' '}
+            <Link href="/" className="text-decoration-none fw-semibold text-primary">
+              Faça login
+            </Link>
+          </p>
 
-          <div className="step-item">
-            <div className="step-number">3</div>
-            <div>
-              <h3>Acesse a plataforma</h3>
-              <p>Após a verificação retorne na plataforma</p>
-            </div>
-          </div>
-
-          <div className="step-item">
-            <div className="step-number">4</div>
-            <div>
-              <h3>Analise os resultados de seus experimentos</h3>
-              <p>Visualize gráficos e compare resultados em tempo real</p>
-            </div>
-          </div>
-
-          <div className="include-card">
-            <h3>Plataforma inclui</h3>
-            <ul>
-              <li>Benchmarks de memória e energia</li>
-              <li>Comparação de modelos de IA</li>
-              <li>Entre outros</li>
-            </ul>
-          </div>
-        </div>
-      </section>
-    </main>
+        </form>
+      </div>
+    </div>
   );
 }

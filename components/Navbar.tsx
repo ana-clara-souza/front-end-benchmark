@@ -50,7 +50,7 @@ export default function Navbar({
 
           {/* Links de Navegação */}
           <div className="d-flex gap-3 ms-4">
-            <Link href="/" className="text-decoration-none fw-semibold text-secondary">
+            <Link href="/experimentos" className="text-decoration-none fw-semibold text-secondary">
               Gerar experimento
             </Link>
             <Link href="/filtros" className="text-decoration-none fw-semibold text-secondary">
