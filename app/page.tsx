@@ -10,6 +10,7 @@ export default function Login() {
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showSenha, setShowSenha] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -79,19 +80,36 @@ export default function Login() {
           {/* SENHA */}
           <div className="mb-3">
             <div className="d-flex align-items-center justify-content-between mb-1">
-              <label className="form-label fw-semibold small text-dark mb-0">Senha</label>
-              <Link href="/recuperar-senha" className="text-decoration-none small text-primary fw-semibold">
+              <label className="form-label fw-semibold small text-dark mb-0">
+                Senha
+              </label>
+
+              <Link
+                href="/recuperar-senha"
+                className="text-decoration-none small text-primary fw-semibold"
+              >
                 Esqueceu a senha?
               </Link>
             </div>
-            <input
-              type="password"
-              className="form-control"
-              placeholder="Sua senha secreta"
-              value={senha}
-              onChange={(e) => setSenha(e.target.value)}
-              required
-            />
+
+            <div className="input-group">
+              <input
+                type={showSenha ? "text" : "password"}
+                className="form-control"
+                placeholder="Sua senha"
+                value={senha}
+                onChange={(e) => setSenha(e.target.value)}
+                required
+              />
+
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={() => setShowSenha(!showSenha)}
+              >
+                <i className={`bi ${showSenha ? "bi-eye-slash" : "bi-eye"}`}></i>
+              </button>
+            </div>
           </div>
 
           {/* ERRO */}

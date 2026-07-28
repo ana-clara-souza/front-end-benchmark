@@ -175,7 +175,11 @@ export default function Cadastro() {
                   onClick={() => setShowSenha(!showSenha)}
                   aria-label={showSenha ? 'Esconder senha' : 'Mostrar senha'}
                 >
-                  {showSenha ? '🙈' : '👁️'}
+                  {showSenha ? (
+                    <i className="bi bi-eye-slash"></i>
+                  ) : (
+                    <i className="bi bi-eye"></i>
+                  )}
                 </button>
               </div>
             </div>
@@ -199,7 +203,11 @@ export default function Cadastro() {
                   onClick={() => setShowConfirmarSenha(!showConfirmarSenha)}
                   aria-label={showConfirmarSenha ? 'Esconder confirmação' : 'Mostrar confirmação'}
                 >
-                  {showConfirmarSenha ? '🙈' : '👁️'}
+                  {showConfirmarSenha ? (
+                    <i className="bi bi-eye-slash"></i>
+                  ) : (
+                    <i className="bi bi-eye"></i>
+                  )}
                 </button>
               </div>
             </div>
