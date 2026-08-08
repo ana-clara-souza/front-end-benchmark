@@ -109,6 +109,22 @@
   font-size: 14px;
 }
 .chart-download-menu__trigger:hover { background: #e5e7eb; }
+/* Variante do gatilho usada pelo DatasetDownloadMenu (botão com texto, no
+   cabeçalho do dashboard) — o ChartDownloadMenu original é ícone-only
+   30x30 (⬇ dentro do card/modal), aqui precisa de largura automática. */
+.dataset-download-menu__trigger {
+  width: auto;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.dataset-download-menu__trigger:disabled { color: #9ca3af; cursor: not-allowed; }
 
 .chart-download-menu__panel {
   position: absolute;

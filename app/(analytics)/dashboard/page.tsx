@@ -33,12 +33,29 @@
 
 import dynamic from 'next/dynamic';
 import Navbar from '../../../components/Navbar';
+import ErrorBoundary from '../../../components/ErrorBoundary';
 import { useAnalyticsFeedFromFilter } from '../../../lib/dashboardData/useAnalyticsFeedFromFilter';
 import { buildSlotsFromFeed } from '../../../lib/analytics-engine/components/chartRegistry.js';
 
 const AnalyticsDashboardGrid = dynamic(
   () => import('../../../lib/analytics-engine/components/AnalyticsDashboardGrid.jsx'),
   { ssr: false }
+);
+
+// DatasetDownloadMenu não depende de Plotly (só de xlsx/Blob), mas segue o
+// mesmo import dinâmico dos demais componentes da engine por consistência
+// e pra manter tudo que usa Blob/URL fora do bundle do servidor.
+//
+// `loading`: enquanto o chunk carrega, mostra algo em vez de nada — sem
+// isso, a lacuna entre "página montou" e "chunk terminou de carregar" é
+// visualmente idêntica a "esse botão não existe", que foi exatamente o
+// sintoma relatado.
+const DatasetDownloadMenu = dynamic(
+  () => import('../../../components/DatasetDownloadMenu.jsx'),
+  {
+    ssr: false,
+    loading: () => <span style={{ fontSize: 13, color: '#9ca3af' }}>Carregando botão de download…</span>,
+  }
 );
 
 const STATUS_LABEL: Record<string, string> = {
@@ -57,6 +74,17 @@ export default function DashboardPage() {
   const feed = useAnalyticsFeedFromFilter();
   const slots = buildSlotsFromFeed(feed.mobile, feed.prediction);
 
+  // Dataset BRUTO completo recebido nesta entrega (todos os domínios que
+  // chegaram), para o botão único de download no cabeçalho — distinto das
+  // medidas descritivas (statsData) que cada gráfico já exporta no seu
+  // próprio modal (ChartDownloadMenu). Grupos vazios/ausentes são
+  // descartados automaticamente pelos exportadores em dataExport.js.
+  const rawDatasets = {
+    mobile: feed.mobile?.records ?? [],
+    predicao: feed.prediction?.records ?? [],
+    predicao_mobile_data: feed.prediction?.mobileData ?? [],
+  };
+
   return (
     <main className="dashboard-page">
       <Navbar userName="Ana" initials="AS" />
@@ -64,9 +92,14 @@ export default function DashboardPage() {
       <section className="dashboard-content">
         <div className="dashboard-header">
           <h2 className="dashboard-title">Gráficos</h2>
-          <span style={{ fontSize: 13, color: STATUS_COLOR[feed.deliveryStatus] }}>
-            {STATUS_LABEL[feed.deliveryStatus]}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <span style={{ fontSize: 13, color: STATUS_COLOR[feed.deliveryStatus] }}>
+              {STATUS_LABEL[feed.deliveryStatus]}
+            </span>
+            <ErrorBoundary label="DatasetDownloadMenu">
+              <DatasetDownloadMenu datasets={rawDatasets} filename="dataset_completo" />
+            </ErrorBoundary>
+          </div>
         </div>
 
         {/* Erro na ENTREGA em si (ex: a chamada da página de filtro ao Node falhou) */}

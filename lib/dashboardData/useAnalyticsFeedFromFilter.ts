@@ -37,8 +37,22 @@ const { createInitialState, reduceIncomingMessage } = StoreModule as unknown as 
 };
 
 export interface AnalyticsFeedState {
-  mobile: { requested: string[]; results: Record<string, unknown>; recordCount: number } | null;
-  prediction: { requested: string[]; results: Record<string, unknown>; recordCount: number } | null;
+  mobile: {
+    requested: string[];
+    results: Record<string, unknown>;
+    recordCount: number;
+    /** Dataset bruto normalizado (ExperimentRecord[] recebido em `data`), ANTES da agregação em stats — usado pelo download do "conjunto completo". */
+    records: Record<string, unknown>[];
+  } | null;
+  prediction: {
+    requested: string[];
+    results: Record<string, unknown>;
+    recordCount: number;
+    /** Registros de predição brutos normalizados (PredictionRecord[] recebido em `data`). */
+    records: Record<string, unknown>[];
+    /** Execuções mobile brutas normalizadas (MobileExecutionRecord[] recebido em `mobile_data`, usado pro Pareto) — null se a mensagem não trouxe `mobile_data`. */
+    mobileData: Record<string, unknown>[] | null;
+  } | null;
   lastMessageType: "mobile" | "prediction" | "unknown" | null;
   lastError: string[] | null;
   lastUpdatedAt: number | null;

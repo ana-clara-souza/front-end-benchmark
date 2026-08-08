@@ -27,7 +27,7 @@ export default function ChartDownloadMenu({ plotRef, Plotly, statsData, filename
   async function handleExport(kind) {
     setBusy(kind);
     try {
-      const gd = plotRef?.current?.el;
+      const gd = plotRef?.current;
       if (kind === "png") {
         if (!gd) throw new Error("Gráfico ainda não está pronto para exportar imagem.");
         await exportPNG(gd, Plotly, filename);
