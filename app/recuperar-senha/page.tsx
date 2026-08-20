@@ -9,6 +9,8 @@ export default function RecuperarSenha() {
   const [code, setCode] = useState(['', '', '', '', '', '']);
   const [novaSenha, setNovaSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
+  const [showNovaSenha, setShowNovaSenha] = useState(false);
+  const [showConfirmarSenha, setShowConfirmarSenha] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -30,7 +32,6 @@ export default function RecuperarSenha() {
   }, [step]);
 
   const handleCodeChange = (index: number, value: string) => {
-    // Apenas permitir o último caractere digitado
     if (value.length > 1) {
       value = value.charAt(value.length - 1);
     }
@@ -39,14 +40,12 @@ export default function RecuperarSenha() {
     newCode[index] = value;
     setCode(newCode);
 
-    // Ir para o próximo input
     if (value && index < 5) {
       codeRefs[index + 1].current?.focus();
     }
   };
 
   const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Se o usuário pressionar Backspace em um input vazio, focar no anterior
     if (e.key === 'Backspace' && !code[index] && index > 0) {
       codeRefs[index - 1].current?.focus();
     }
@@ -58,11 +57,15 @@ export default function RecuperarSenha() {
     setError(null);
     setSuccess(null);
 
+    const cleanEmail = email.trim();
+
     try {
-      const response = await fetch('https://api-ic-mutt.onrender.com/api/auth/forgot-password', {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api-ic-mutt.onrender.com';
+
+      const response = await fetch(`${baseUrl}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ emailInstitucional: email }),
+        body: JSON.stringify({ emailInstitucional: cleanEmail }),
       });
 
       const data = await response.json();
@@ -76,8 +79,6 @@ export default function RecuperarSenha() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erro ao conectar com o servidor.';
       setError(msg);
-      // Para fins de desenvolvimento ou se o endpoint de produção não estiver 100% ativo, 
-      // mostramos um aviso no console e permitimos avançar para a próxima etapa na demonstração.
       console.warn('API de forgot-password indisponível. Avançando modo demo.', err);
       setStep(2);
     } finally {
@@ -99,7 +100,9 @@ export default function RecuperarSenha() {
     }
 
     try {
-      const response = await fetch('https://api-ic-mutt.onrender.com/api/auth/verify-code', {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api-ic-mutt.onrender.com';
+
+      const response = await fetch(`${baseUrl}/api/auth/verify-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ emailInstitucional: email, code: codeString }),
@@ -138,7 +141,9 @@ export default function RecuperarSenha() {
     const codeString = code.join('');
 
     try {
-      const response = await fetch('https://api-ic-mutt.onrender.com/api/auth/reset-password', {
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api-ic-mutt.onrender.com';
+
+      const response = await fetch(`${baseUrl}/api/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -167,187 +172,222 @@ export default function RecuperarSenha() {
   };
 
   return (
-    <main className="recuperar-page">
-      <section className="recuperar-left-panel">
-        <div className="recuperar-left-content">
-          <h1 className="recuperar-brand">Benchmark Web</h1>
-
-          <Link href="/" className="recuperar-back-link text-decoration-none">
-            <span className="recuperar-back-arrow">←</span>
-            Voltar para login
-          </Link>
-
-          <div className="recuperar-progress">
-            <span className={step === 1 ? 'recuperar-progress-active' : 'recuperar-progress-inactive'}></span>
-            <span className={step === 2 ? 'recuperar-progress-active' : 'recuperar-progress-inactive'}></span>
-            <span className={step === 3 ? 'recuperar-progress-active' : 'recuperar-progress-inactive'}></span>
-          </div>
-
-          <h2 className="recuperar-title">
+    <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light px-3 py-5">
+      <div className="card border-0 shadow-sm rounded-4 p-4 p-sm-5" style={{ maxWidth: '440px', width: '100%' }}>
+        
+        {/* CABEÇALHO */}
+        <div className="text-center mb-4">
+          <h2 className="fw-bold text-dark fs-4 mb-1">Benchmark Web</h2>
+          <h3 className="fs-6 fw-bold text-secondary mb-1">
             {step === 1 && 'Recuperar Senha'}
-            {step === 2 && 'Verifique seu email'}
-            {step === 3 && 'Nova senha'}
-          </h2>
-
-          <p className="recuperar-description">
-            {step === 1 && 'Insira seu email institucional para receber o código de verificação.'}
-            {step === 2 && `Enviamos um código de 6 dígitos para ${email || 'seu email'}`}
-            {step === 3 && 'Defina uma nova senha segura de acesso para a sua conta.'}
+            {step === 2 && 'Verifique seu e-mail'}
+            {step === 3 && 'Criar Nova Senha'}
+          </h3>
+          <p className="text-muted small mb-0">
+            {step === 1 && 'Insira seu e-mail corporativo para receber o código de verificação'}
+            {step === 2 && `Enviamos um código de 6 dígitos para ${email || 'seu e-mail'}`}
+            {step === 3 && 'Defina uma nova senha de acesso para a sua conta'}
           </p>
+        </div>
 
-          {error && (
-            <div className="alert alert-danger py-2 px-3 small mb-3" role="alert">
-              {error}
-            </div>
-          )}
+        {/* PROGRESSO DAS ETAPAS */}
+        <div className="d-flex justify-content-center gap-2 mb-4">
+          <span className={`rounded-pill flex-grow-1 ${step >= 1 ? 'bg-primary' : 'bg-secondary-subtle'}`} style={{ height: '4px' }}></span>
+          <span className={`rounded-pill flex-grow-1 ${step >= 2 ? 'bg-primary' : 'bg-secondary-subtle'}`} style={{ height: '4px' }}></span>
+          <span className={`rounded-pill flex-grow-1 ${step >= 3 ? 'bg-primary' : 'bg-secondary-subtle'}`} style={{ height: '4px' }}></span>
+        </div>
 
-          {success && (
-            <div className="alert alert-success py-2 px-3 small mb-3" role="alert">
-              {success}
-            </div>
-          )}
+        {/* ERROS E SUCESSOS */}
+        {error && (
+          <div className="alert alert-danger py-2 px-3 small mb-3 rounded-3" role="alert">
+            ⚠ {error}
+          </div>
+        )}
 
-          {step === 1 && (
-            <form onSubmit={handleSendEmail} className="recuperar-form-block">
-              <label className="recuperar-label">EMAIL INSTITUCIONAL</label>
+        {success && (
+          <div className="alert alert-success py-2 px-3 small mb-3 rounded-3" role="alert">
+            ✓ {success}
+          </div>
+        )}
+
+        {/* ETAPA 1: SOLICITAR CÓDIGO */}
+        {step === 1 && (
+          <form onSubmit={handleSendEmail}>
+            <div className="mb-3">
+              <label className="form-label fw-semibold small text-dark">Email Corporativo</label>
               <input
                 type="email"
-                className="form-control mb-3"
-                style={{
-                  height: '44px',
-                  borderRadius: '8px',
-                  border: '1px solid #b8b8b8',
-                  padding: '0 12px',
-                  width: '100%',
-                  background: '#ffffff',
-                }}
-                placeholder="nome.sobrenome@universidade.edu.br"
+                className="form-control"
+                placeholder="seuemail@institucional.br"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  if (error) setError(null);
+                  setEmail(e.target.value);
+                }}
+                disabled={loading}
                 required
               />
-              <button type="submit" className="recuperar-verify-button" disabled={loading}>
-                {loading ? 'Enviando...' : 'Enviar código de verificação'}
-              </button>
-            </form>
-          )}
+            </div>
 
-          {step === 2 && (
-            <form onSubmit={handleVerifyCode} className="recuperar-form-block">
-              <label className="recuperar-label">CÓDIGO DE VERIFICAÇÃO</label>
-              <div className="recuperar-code-inputs">
+            <button
+              type="submit"
+              className="btn btn-primary w-100 fw-semibold py-2 mt-2"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Enviando...
+                </>
+              ) : (
+                'Enviar código'
+              )}
+            </button>
+          </form>
+        )}
+
+        {/* ETAPA 2: DIGITAR CÓDIGO */}
+        {step === 2 && (
+          <form onSubmit={handleVerifyCode}>
+            <div className="mb-3">
+              <label className="form-label fw-semibold small text-dark mb-2">Código de Verificação</label>
+              <div className="d-flex justify-content-between gap-2">
                 {code.map((digit, idx) => (
                   <input
                     key={idx}
                     ref={codeRefs[idx]}
                     type="text"
                     maxLength={1}
-                    className="recuperar-code-input"
+                    className="form-control text-center fw-bold fs-5 p-0"
+                    style={{ height: '48px' }}
                     value={digit}
-                    onChange={(e) => handleCodeChange(idx, e.target.value)}
+                    onChange={(e) => {
+                      if (error) setError(null);
+                      handleCodeChange(idx, e.target.value);
+                    }}
                     onKeyDown={(e) => handleKeyDown(idx, e)}
+                    disabled={loading}
                   />
                 ))}
               </div>
-              <button type="submit" className="recuperar-verify-button" disabled={loading}>
-                {loading ? 'Verificando...' : 'Verificar código'}
-              </button>
-            </form>
-          )}
+            </div>
 
-          {step === 3 && (
-            <form onSubmit={handleResetPassword} className="recuperar-form-block">
-              <div className="mb-3">
-                <label className="recuperar-label">NOVA SENHA</label>
+            <button
+              type="submit"
+              className="btn btn-primary w-100 fw-semibold py-2 mt-2"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Verificando...
+                </>
+              ) : (
+                'Verificar código'
+              )}
+            </button>
+
+            <div className="text-center mt-3">
+              <button
+                type="button"
+                className="btn btn-link text-decoration-none small text-primary p-0 fw-semibold"
+                onClick={handleSendEmail}
+                disabled={loading}
+              >
+                Não recebeu? Reenviar código
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* ETAPA 3: NOVA SENHA */}
+        {step === 3 && (
+          <form onSubmit={handleResetPassword}>
+            {/* NOVA SENHA */}
+            <div className="mb-3">
+              <label className="form-label fw-semibold small text-dark">Nova Senha</label>
+              <div className="input-group">
                 <input
-                  type="password"
+                  type={showNovaSenha ? 'text' : 'password'}
                   className="form-control"
-                  style={{
-                    height: '44px',
-                    borderRadius: '8px',
-                    border: '1px solid #b8b8b8',
-                    padding: '0 12px',
-                    width: '100%',
-                    background: '#ffffff',
-                  }}
                   placeholder="Mínimo 6 caracteres"
                   value={novaSenha}
-                  onChange={(e) => setNovaSenha(e.target.value)}
-                  minLength={6}
-                  required
-                />
-              </div>
-              <div className="mb-3">
-                <label className="recuperar-label">CONFIRMAR NOVA SENHA</label>
-                <input
-                  type="password"
-                  className="form-control"
-                  style={{
-                    height: '44px',
-                    borderRadius: '8px',
-                    border: '1px solid #b8b8b8',
-                    padding: '0 12px',
-                    width: '100%',
-                    background: '#ffffff',
+                  onChange={(e) => {
+                    if (error) setError(null);
+                    setNovaSenha(e.target.value);
                   }}
-                  placeholder="Confirme sua senha"
-                  value={confirmarSenha}
-                  onChange={(e) => setConfirmarSenha(e.target.value)}
                   minLength={6}
+                  disabled={loading}
                   required
                 />
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={() => setShowNovaSenha(!showNovaSenha)}
+                  disabled={loading}
+                >
+                  <i className={`bi ${showNovaSenha ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                </button>
               </div>
-              <button type="submit" className="recuperar-verify-button" disabled={loading}>
-                {loading ? 'Processando...' : 'Redefinir senha'}
-              </button>
-            </form>
-          )}
+            </div>
 
-          <p className="recuperar-resend-text">
-            Não recebeu? <a href="#" onClick={(e) => { e.preventDefault(); if (step === 2) handleSendEmail(e); }}>Reenviar código</a>
-          </p>
+            {/* CONFIRMAR NOVA SENHA */}
+            <div className="mb-3">
+              <label className="form-label fw-semibold small text-dark">Confirmar Nova Senha</label>
+              <div className="input-group">
+                <input
+                  type={showConfirmarSenha ? 'text' : 'password'}
+                  className="form-control"
+                  placeholder="Repita sua nova senha"
+                  value={confirmarSenha}
+                  onChange={(e) => {
+                    if (error) setError(null);
+                    setConfirmarSenha(e.target.value);
+                  }}
+                  minLength={6}
+                  disabled={loading}
+                  required
+                />
+                <button
+                  type="button"
+                  className="btn btn-outline-secondary"
+                  onClick={() => setShowConfirmarSenha(!showConfirmarSenha)}
+                  disabled={loading}
+                >
+                  <i className={`bi ${showConfirmarSenha ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="btn btn-primary w-100 fw-semibold py-2 mt-2"
+              disabled={loading}
+            >
+              {loading ? (
+                <>
+                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  Redefinindo...
+                </>
+              ) : (
+                'Redefinir senha'
+              )}
+            </button>
+          </form>
+        )}
+
+        {/* DIVISOR E NAVEGAÇÃO DE VOLTA */}
+        <div className="text-center my-3 text-muted small position-relative">
+          <hr className="my-3" />
         </div>
-      </section>
 
-      <section className="recuperar-right-panel">
-        <div className="recuperar-circle"></div>
-
-        <div className="recuperar-right-content">
-          <h3 className="recuperar-right-title">ETAPAS DE RECUPERAÇÃO</h3>
-
-          <div className="recuperar-step">
-            <div className="recuperar-step-number">1</div>
-            <div>
-              <h4>Solicitar código</h4>
-              <p>Envie o código de redefinição para seu e-mail institucional</p>
-            </div>
-          </div>
-
-          <div className="recuperar-step">
-            <div className="recuperar-step-number">2</div>
-            <div>
-              <h4>Verificar o código</h4>
-              <p>Digite o código de 6 dígitos que enviamos para você</p>
-            </div>
-          </div>
-
-          <div className="recuperar-step">
-            <div className="recuperar-step-number">3</div>
-            <div>
-              <h4>Definir nova senha</h4>
-              <p>Escolha uma nova senha de acesso e faça login</p>
-            </div>
-          </div>
-
-          <div className="recuperar-info-card">
-            <div className="recuperar-info-icon">🔒</div>
-            <div>
-              <h4>Código expira em 10 min</h4>
-              <p>Por segurança não compartilhe o código com ninguém</p>
-            </div>
-          </div>
-        </div>
-      </section>
-    </main>
+        <p className="text-center small text-muted mb-0">
+          Lembrou a senha?{' '}
+          <Link href="/" className="text-decoration-none fw-semibold text-primary">
+            Voltar para o login
+          </Link>
+        </p>
+      </div>
+    </div>
   );
 }
