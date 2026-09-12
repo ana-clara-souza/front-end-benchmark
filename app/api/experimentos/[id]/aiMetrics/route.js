@@ -1,9 +1,9 @@
 import { NextResponse } from "next/server";
-const { connectDB } = require("../../../../../config/db");
-const { getAuthenticatedUser } = require("../../../../../lib/auth");
+const { connectDB } = require("@/config/db");
+const { getAuthenticatedUser } = require("@/lib/auth");
 const {
   addExecucoesScript,
-} = require("../../../../../controllers/experimentoController");
+} = require("@/controllers/experimentoController");
 export const runtime = "nodejs";
 export async function PATCH(request, { params }) {
   const auth = getAuthenticatedUser(request);

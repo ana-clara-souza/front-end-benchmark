@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
-const { connectDB } = require("../../../../config/db");
-const authController = require("../../../../controllers/authController");
+const { connectDB } = require("@/config/db");
+const authController = require("@/controllers/authController");
 
 export const runtime = "nodejs";
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-const { connectDB } = require("../../../../config/db");
-const { verifyEmail } = require("../../../../controllers/authController");
+const { connectDB } = require("@/config/db");
+const { verifyEmail } = require("@/controllers/authController");
 export const runtime = "nodejs";
 export async function GET(request) {
   await connectDB();

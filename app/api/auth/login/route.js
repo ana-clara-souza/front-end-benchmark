@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-const { connectDB } = require("../../../../config/db");
-const { login } = require("../../../../controllers/authController");
+const { connectDB } = require("@/config/db");
+const { login } = require("@/controllers/authController");
 const {
   check,
   registerFailure,
-} = require("../../../../lib/loginRateLimit");
+} = require("@/lib/loginRateLimit");
 export const runtime = "nodejs";
 
 const SESSION_COOKIE = "access_token";

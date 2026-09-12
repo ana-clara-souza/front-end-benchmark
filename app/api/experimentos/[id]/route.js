@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-const { connectDB } = require("../../../../config/db");
-const { getAuthenticatedUser } = require("../../../../lib/auth");
+const { connectDB } = require("@/config/db");
+const { getAuthenticatedUser } = require("@/lib/auth");
 const {
   getExperimentoById,
   deleteExperimento,
-} = require("../../../../controllers/experimentoController");
+} = require("@/controllers/experimentoController");
 export const runtime = "nodejs";
 export async function GET(request, { params }) {
   const auth = getAuthenticatedUser(request);

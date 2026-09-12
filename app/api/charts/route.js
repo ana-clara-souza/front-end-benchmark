@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
-const { connectDB } = require("../../../config/db");
-const { getAuthenticatedUser } = require("../../../lib/auth");
-const { createCharts } = require("../../../controllers/chartController");
+const { connectDB } = require("@/config/db");
+const { getAuthenticatedUser } = require("@/lib/auth");
+const { createCharts } = require("@/controllers/chartController");
 export const runtime = "nodejs";
 export async function POST(request) {
   const auth = getAuthenticatedUser(request);
