@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 
 export default function Login() {
   const router = useRouter();
@@ -18,7 +20,7 @@ export default function Login() {
     setError('');
 
     try {
-      const response = await fetch('https://api-ic-mutt.onrender.com/api/auth/login', {
+      const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
