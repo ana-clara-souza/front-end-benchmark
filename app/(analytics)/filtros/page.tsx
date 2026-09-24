@@ -62,19 +62,23 @@ export default function FiltrosPage() {
     chart_f1_heatmap: 'Heatmap F1 por Classe',
   };
 
-  // Carrega a lista real de experimentos da API do Node
+  // Carrega a lista real de experimentos da API usando cookies HttpOnly
   const fetchMyExperiments = async () => {
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) return;
-
     setLoadingExperiments(true);
     try {
       const response = await fetch('https://api-ic-mutt.onrender.com/api/experimentos/info', {
         method: 'GET',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Envia automaticamente o cookie HttpOnly
       });
 
-      if (!response.ok) throw new Error('Erro ao buscar lista de experimentos.');
+      if (!response.ok) {
+        if (response.status === 401) {
+          router.push('/');
+          return;
+        }
+        throw new Error('Erro ao buscar lista de experimentos.');
+      }
 
       const data = await response.json();
       console.log('📦 Retorno bruto da API (/experimentos/info em Filtros):', data);
@@ -185,13 +189,6 @@ export default function FiltrosPage() {
     setLoading(true);
     setError(null);
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    if (!token) {
-      setError('Token de autenticação não encontrado. Faça login novamente.');
-      setLoading(false);
-      return;
-    }
-
     if (selectedExperiments.length === 0) {
       setError('Por favor, selecione pelo menos um experimento.');
       setLoading(false);
@@ -220,17 +217,20 @@ export default function FiltrosPage() {
 
       console.log('>>> [1] Payload enviado para /api/charts:', JSON.stringify(payload, null, 2));
 
-      // 1. REQUISIÇÃO ÚNICA PARA O BACKEND
+      // Requisição para o Backend com Cookie HttpOnly
       const response = await fetch('https://api-ic-mutt.onrender.com/api/charts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
+        credentials: 'include', // Envia o cookie de autenticação
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Sessão expirada ou não autorizada. Por favor, faça login novamente.');
+        }
         throw new Error(`Erro HTTP ${response.status} ao carregar gráficos do servidor.`);
       }
 
@@ -246,7 +246,7 @@ export default function FiltrosPage() {
         throw new Error(msg);
       }
 
-      // 2. NORMALIZAÇÃO UNIFICADA
+      // Normalização unificada
       const messages = normalizeNodeResponseIntoMessages(data);
       console.log('>>> [3] Mensagens Normalizadas para o Contexto:', messages);
 
@@ -254,7 +254,7 @@ export default function FiltrosPage() {
         throw new Error('Nenhum dado válido foi retornado para os experimentos selecionados.');
       }
 
-      // 3. HANDOFF DIRETO PARA O CONTEXTO E NAVEGAÇÃO
+      // Entrega do payload e navegação
       deliverPayload(messages);
       router.push('/dashboard');
     } catch (err: unknown) {

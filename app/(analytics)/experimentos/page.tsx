@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import Navbar from '../../../components/Navbar';
 
 interface Experiment {
@@ -19,6 +20,7 @@ interface Experiment {
 }
 
 export default function ExperimentosPage() {
+  const router = useRouter();
   const [experimentosAtivos, setExperimentosAtivos] = useState<Experiment[]>([]);
   const [experimentosArquivados, setExperimentosArquivados] = useState<Experiment[]>([]);
   const [activeTab, setActiveTab] = useState<'ativos' | 'arquivados'>('ativos');
@@ -29,22 +31,29 @@ export default function ExperimentosPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [newKey, setNewKey] = useState<string | null>(null);
 
-  // Busca lista de experimentos ativos e arquivados simultaneamente
+  // Busca lista de experimentos ativos e arquivados simultaneamente usando cookies HttpOnly
   const fetchExperimentos = useCallback(async () => {
     setLoading(true);
     setError(null);
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    const headers = {
-      'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json',
+    const requestOptions: RequestInit = {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include', // Envia o cookie HttpOnly de sessão
     };
 
     try {
       const [resAtivos, resArquivados] = await Promise.all([
-        fetch('https://api-ic-mutt.onrender.com/api/experimentos/info', { headers }),
-        fetch('https://api-ic-mutt.onrender.com/api/experimentos/arquivados', { headers }),
+        fetch('https://api-ic-mutt.onrender.com/api/experimentos/info', requestOptions),
+        fetch('https://api-ic-mutt.onrender.com/api/experimentos/arquivados', requestOptions),
       ]);
+
+      if (resAtivos.status === 401 || resArquivados.status === 401) {
+        router.push('/');
+        return;
+      }
 
       if (!resAtivos.ok || !resArquivados.ok) {
         throw new Error('Falha ao carregar a lista de experimentos.');
@@ -71,7 +80,7 @@ export default function ExperimentosPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     fetchExperimentos();
@@ -120,17 +129,20 @@ export default function ExperimentosPage() {
     setSuccessMessage(null);
     setNewKey(null);
 
-    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-
     try {
       const response = await fetch('https://api-ic-mutt.onrender.com/api/experimentos/chaves', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Envia o cookie de autenticação
         body: JSON.stringify({ nome }),
       });
+
+      if (response.status === 401) {
+        router.push('/');
+        return;
+      }
 
       if (!response.ok) {
         throw new Error('Erro ao gerar nova chave de experimento.');

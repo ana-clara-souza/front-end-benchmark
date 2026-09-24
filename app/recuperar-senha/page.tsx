@@ -2,8 +2,11 @@
 
 import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function RecuperarSenha() {
+  const router = useRouter();
+
   const [step, setStep] = useState(1); // 1: Email, 2: Código, 3: Nova Senha
   const [email, setEmail] = useState('');
   const [code, setCode] = useState(['', '', '', '', '', '']);
@@ -65,6 +68,7 @@ export default function RecuperarSenha() {
       const response = await fetch(`${baseUrl}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ emailInstitucional: cleanEmail }),
       });
 
@@ -79,8 +83,6 @@ export default function RecuperarSenha() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erro ao conectar com o servidor.';
       setError(msg);
-      console.warn('API de forgot-password indisponível. Avançando modo demo.', err);
-      setStep(2);
     } finally {
       setLoading(false);
     }
@@ -105,6 +107,7 @@ export default function RecuperarSenha() {
       const response = await fetch(`${baseUrl}/api/auth/verify-code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ emailInstitucional: email, code: codeString }),
       });
 
@@ -119,8 +122,6 @@ export default function RecuperarSenha() {
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erro ao conectar com o servidor.';
       setError(msg);
-      console.warn('API de verify-code indisponível. Avançando modo demo.', err);
-      setStep(3);
     } finally {
       setLoading(false);
     }
@@ -146,6 +147,7 @@ export default function RecuperarSenha() {
       const response = await fetch(`${baseUrl}/api/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({
           emailInstitucional: email,
           code: codeString,
@@ -161,7 +163,7 @@ export default function RecuperarSenha() {
 
       setSuccess('Sua senha foi redefinida com sucesso! Redirecionando para login...');
       setTimeout(() => {
-        window.location.href = '/';
+        router.push('/');
       }, 3000);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Erro ao conectar com o servidor.';
