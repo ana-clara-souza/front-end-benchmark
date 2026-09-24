@@ -47,7 +47,7 @@ export default function ChartModal({ title, data, layout, statsData, filename, o
           <Plot
             ref={plotRef}
             data={data}
-            layout={{ ...layout, title: undefined, autosize: true }}
+            layout={{ ...layout, autosize: true, margin: { t: 80, b: 60, l: 60, r: 40, ...layout.margin } }}
             config={{
               displayModeBar: true,
               responsive: true,
