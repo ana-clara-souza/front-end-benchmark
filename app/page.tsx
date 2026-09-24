@@ -23,6 +23,7 @@ export default function Login() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Permite receber e enviar cookies HttpOnly
         body: JSON.stringify({
           emailInstitucional: email,
           senha: senha,
@@ -33,13 +34,6 @@ export default function Login() {
 
       if (!response.ok) {
         throw new Error(data.message || 'Erro ao realizar login.');
-      }
-
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-      }
-      if (data.user) {
-        localStorage.setItem('user', JSON.stringify(data.user));
       }
 
       router.push('/filtros');
