@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import Navbar from '../../../components/Navbar';
-import { useAnalyticsPayloadContext } from '../../../lib/dashboardData/AnalyticsPayloadContext';
-import { normalizeNodeResponseIntoMessages } from '../../../lib/dashboardData/normalizeNodeResponse';
+import Navbar from '@/components/Navbar';
+import { useAnalyticsPayloadContext } from '@/lib/dashboardData/AnalyticsPayloadContext';
+import { normalizeNodeResponseIntoMessages } from '@/lib/dashboardData/normalizeNodeResponse';
 
 // Interface completa igual à página de experimentos
 interface ExperimentInfo {
@@ -69,9 +69,9 @@ export default function FiltrosPage() {
 
     setLoadingExperiments(true);
     try {
-      const response = await fetch('https://api-ic-mutt.onrender.com/api/experimentos/info', {
+      const response = await fetch('http://localhost:3000/api/experimentos/info', {
         method: 'GET',
-        headers: { Authorization: `Bearer ${token}` },
+        headers: { credentials: 'include',},
       });
 
       if (!response.ok) throw new Error('Erro ao buscar lista de experimentos.');
@@ -221,11 +221,11 @@ export default function FiltrosPage() {
       console.log('>>> [1] Payload enviado para /api/charts:', JSON.stringify(payload, null, 2));
 
       // 1. REQUISIÇÃO ÚNICA PARA O BACKEND
-      const response = await fetch('https://api-ic-mutt.onrender.com/api/charts', {
+      const response = await fetch('http://localhost:3000/api/charts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
+          credentials: 'include',
         },
         body: JSON.stringify(payload),
       });

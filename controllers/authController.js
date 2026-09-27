@@ -28,6 +28,7 @@ exports.login = async ({ body }) => {
       process.env.REQUIRE_EMAIL_VERIFICATION === "true" &&
       !user.emailVerificado
     ) {
+      
       return {
         status: 403,
         body: { message: "Confirme seu e-mail antes de realizar o login." },
@@ -38,6 +39,7 @@ exports.login = async ({ body }) => {
       status: 200,
       body: {
         message: "Login realizado com sucesso.",
+        token: authService.generateAccessToken(user._id),
         sessionToken: authService.generateAccessToken(user._id),
         user: {
           id: user._id,
@@ -202,7 +204,7 @@ exports.forgotPassword = async ({ body }) => {
     }
 
     const genericMessage =
-      "Se existir uma conta para este e-mail, um link de recuperação será enviado.";
+      "Se existir uma conta para este e-mail, um código de recuperação será enviado.";
 
     const user = await User.findOne({ emailInstitucional });
 
@@ -223,9 +225,9 @@ exports.forgotPassword = async ({ body }) => {
       };
     }
 
-    const resetToken = authService.generateRandomToken();
+    const resetCode = authService.generatePasswordResetCode();
 
-    user.resetPasswordToken = resetToken;
+    user.resetPasswordToken = authService.hashPasswordResetCode(resetCode);
     user.resetPasswordExpires = authService.generateTokenExpiration(3);
 
     await user.save();
@@ -233,7 +235,7 @@ exports.forgotPassword = async ({ body }) => {
     if (EMAIL_ENABLED) {
       await emailService.sendPasswordResetEmail(
         user.emailInstitucional,
-        resetToken,
+        resetCode,
       );
     }
 
@@ -253,19 +255,31 @@ exports.forgotPassword = async ({ body }) => {
 
 exports.resetPassword = async ({ body }) => {
   try {
-    const { token, senha } = body;
+    // `code` e `novaSenha` são os nomes enviados pela tela de recuperação.
+    // Mantemos os aliases antigos para não quebrar consumidores já existentes.
+    const { emailInstitucional, code, codigo, novaSenha, senha } = body;
+    const resetCode = code ?? codigo;
+    const newPassword = novaSenha ?? senha;
 
-    if (!token || !senha) {
+    if (!emailInstitucional || !resetCode || !newPassword) {
       return {
         status: 400,
         body: {
-          message: "Token e nova senha são obrigatórios.",
+          message: "E-mail, código e nova senha são obrigatórios.",
         },
       };
     }
 
+    if (typeof resetCode !== "string" || !/^\d{6}$/.test(resetCode)) {
+      return {
+        status: 400,
+        body: { message: "O código deve conter exatamente 6 números." },
+      };
+    }
+
     const user = await User.findOne({
-      resetPasswordToken: token,
+      emailInstitucional,
+      resetPasswordToken: authService.hashPasswordResetCode(resetCode),
       resetPasswordExpires: { $gt: new Date() },
     }).select("+senha");
 
@@ -278,7 +292,7 @@ exports.resetPassword = async ({ body }) => {
       };
     }
 
-    if (senha.length < 8) {
+    if (typeof newPassword !== "string" || newPassword.length < 8) {
       return {
         status: 400,
         body: {
@@ -287,7 +301,7 @@ exports.resetPassword = async ({ body }) => {
       };
     }
 
-    user.senha = await authService.hashPassword(senha);
+    user.senha = await authService.hashPassword(newPassword);
 
     user.resetPasswordToken = null;
     user.resetPasswordExpires = null;
@@ -299,6 +313,52 @@ exports.resetPassword = async ({ body }) => {
       body: {
         message: "Senha redefinida com sucesso.",
       },
+    };
+  } catch (err) {
+    console.error(err);
+
+    return {
+      status: 500,
+      body: { message: "Erro interno do servidor." },
+    };
+  }
+};
+
+exports.verifyPasswordResetCode = async ({ body }) => {
+  try {
+    const { emailInstitucional, code, codigo } = body;
+    const resetCode = code ?? codigo;
+
+    if (!emailInstitucional || !resetCode) {
+      return {
+        status: 400,
+        body: { message: "E-mail e código são obrigatórios." },
+      };
+    }
+
+    if (typeof resetCode !== "string" || !/^\d{6}$/.test(resetCode)) {
+      return {
+        status: 400,
+        body: { message: "O código deve conter exatamente 6 números." },
+      };
+    }
+
+    const user = await User.exists({
+      emailInstitucional,
+      resetPasswordToken: authService.hashPasswordResetCode(resetCode),
+      resetPasswordExpires: { $gt: new Date() },
+    });
+
+    if (!user) {
+      return {
+        status: 400,
+        body: { message: "Código inválido ou expirado." },
+      };
+    }
+
+    return {
+      status: 200,
+      body: { message: "Código verificado com sucesso." },
     };
   } catch (err) {
     console.error(err);

@@ -31,6 +31,8 @@ export default function Login() {
 
       const data = await response.json();
 
+      console.log("dados recebidos")
+
       if (!response.ok) {
         throw new Error(data.message || 'Erro ao realizar login.');
       }
@@ -38,9 +40,16 @@ export default function Login() {
       if (data.token) {
         localStorage.setItem('token', data.token);
       }
+
+      console.log("token recebido")
+
       if (data.user) {
         localStorage.setItem('user', JSON.stringify(data.user));
       }
+
+      console.log("dados do usuario recebido")
+
+      console.log('Login realizado. Redirecionando para /filtros');
 
       router.push('/filtros');
     } catch (err) {

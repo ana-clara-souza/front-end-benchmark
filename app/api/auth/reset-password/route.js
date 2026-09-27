@@ -10,20 +10,15 @@ export async function POST(request) {
     await connectDB();
 
     const body = await request.json();
+    const response = await authController.resetPassword({ body });
 
-    const response = await authController.resetPassword({
-      body,
-    });
-
-    return NextResponse.json(response.body, {
-      status: response.status,
-    });
+    return NextResponse.json(response.body, { status: response.status });
   } catch (err) {
     console.error(err);
 
     return NextResponse.json(
       { message: "Erro interno do servidor." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

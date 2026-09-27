@@ -32,20 +32,30 @@ export default function RecuperarSenha() {
   }, [step]);
 
   const handleCodeChange = (index: number, value: string) => {
+    // Permite apenas um caractere
     if (value.length > 1) {
       value = value.charAt(value.length - 1);
+    }
+
+    // Permite apenas números
+    if (value && !/^\d$/.test(value)) {
+      return;
     }
 
     const newCode = [...code];
     newCode[index] = value;
     setCode(newCode);
 
+    // Avança automaticamente para o próximo campo
     if (value && index < 5) {
       codeRefs[index + 1].current?.focus();
     }
   };
 
-  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (
+    index: number,
+    e: React.KeyboardEvent<HTMLInputElement>
+  ) => {
     if (e.key === 'Backspace' && !code[index] && index > 0) {
       codeRefs[index - 1].current?.focus();
     }
@@ -53,34 +63,60 @@ export default function RecuperarSenha() {
 
   const handleSendEmail = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setLoading(true);
     setError(null);
     setSuccess(null);
 
     const cleanEmail = email.trim();
 
-    try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api-ic-mutt.onrender.com';
+    if (!cleanEmail) {
+      setError('Por favor, informe seu e-mail.');
+      setLoading(false);
+      return;
+    }
 
-      const response = await fetch(`${baseUrl}/api/auth/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ emailInstitucional: cleanEmail }),
-      });
+    try {
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL ||
+        'https://api-ic-mutt.onrender.com';
+
+      const response = await fetch(
+        `${baseUrl}/api/auth/forgot-password`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            emailInstitucional: cleanEmail,
+          }),
+        }
+      );
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Erro ao solicitar código de recuperação.');
+        throw new Error(
+          data.message || 'Erro ao solicitar código de recuperação.'
+        );
       }
 
-      setSuccess('Código de verificação enviado! Verifique sua caixa de entrada.');
+      // Só avança se a API realmente tiver respondido com sucesso
+      setSuccess(
+        'Código de verificação enviado! Verifique sua caixa de entrada.'
+      );
       setStep(2);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Erro ao conectar com o servidor.';
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Erro ao conectar com o servidor.';
+
       setError(msg);
-      console.warn('API de forgot-password indisponível. Avançando modo demo.', err);
-      setStep(2);
+
+      // NÃO avançar para a etapa 2 em caso de erro.
+      // O usuário permanece na etapa 1.
     } finally {
       setLoading(false);
     }
@@ -88,39 +124,60 @@ export default function RecuperarSenha() {
 
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setLoading(true);
     setError(null);
     setSuccess(null);
 
     const codeString = code.join('');
-    if (codeString.length < 6) {
+    const cleanEmail = email.trim();
+
+    if (codeString.length !== 6) {
       setError('Por favor, insira o código de 6 dígitos.');
       setLoading(false);
       return;
     }
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api-ic-mutt.onrender.com';
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL ||
+        'https://api-ic-mutt.onrender.com';
 
-      const response = await fetch(`${baseUrl}/api/auth/verify-code`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ emailInstitucional: email, code: codeString }),
-      });
+      const response = await fetch(
+        `${baseUrl}/api/auth/verify-code`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            emailInstitucional: cleanEmail,
+            code: codeString,
+          }),
+        }
+      );
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Código de verificação inválido.');
+        throw new Error(
+          data.message || 'Código de verificação inválido.'
+        );
       }
 
+      // Só avança se o backend confirmar o código
       setSuccess('Código verificado com sucesso!');
       setStep(3);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Erro ao conectar com o servidor.';
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Erro ao conectar com o servidor.';
+
       setError(msg);
-      console.warn('API de verify-code indisponível. Avançando modo demo.', err);
-      setStep(3);
+
+      // NÃO avançar para a etapa 3 em caso de erro.
+      // O usuário permanece na etapa 2.
     } finally {
       setLoading(false);
     }
@@ -128,9 +185,25 @@ export default function RecuperarSenha() {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+
     setLoading(true);
     setError(null);
     setSuccess(null);
+
+    const cleanEmail = email.trim();
+    const codeString = code.join('');
+
+    if (codeString.length !== 6) {
+      setError('Código de verificação inválido.');
+      setLoading(false);
+      return;
+    }
+
+    if (novaSenha.length < 8) {
+      setError('A senha deve possuir pelo menos 8 caracteres.');
+      setLoading(false);
+      return;
+    }
 
     if (novaSenha !== confirmarSenha) {
       setError('As senhas não coincidem.');
@@ -138,33 +211,47 @@ export default function RecuperarSenha() {
       return;
     }
 
-    const codeString = code.join('');
-
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api-ic-mutt.onrender.com';
+      const baseUrl =
+        process.env.NEXT_PUBLIC_API_URL ||
+        'https://api-ic-mutt.onrender.com';
 
-      const response = await fetch(`${baseUrl}/api/auth/reset-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          emailInstitucional: email,
-          code: codeString,
-          novaSenha: novaSenha,
-        }),
-      });
+      const response = await fetch(
+        `${baseUrl}/api/auth/reset-password`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            emailInstitucional: cleanEmail,
+            code: codeString,
+            novaSenha: novaSenha,
+          }),
+        }
+      );
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'Erro ao redefinir a senha.');
+        throw new Error(
+          data.message || 'Erro ao redefinir a senha.'
+        );
       }
 
-      setSuccess('Sua senha foi redefinida com sucesso! Redirecionando para login...');
+      setSuccess(
+        'Sua senha foi redefinida com sucesso! Redirecionando para login...'
+      );
+
       setTimeout(() => {
         window.location.href = '/';
       }, 3000);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Erro ao conectar com o servidor.';
+      const msg =
+        err instanceof Error
+          ? err.message
+          : 'Erro ao conectar com o servidor.';
+
       setError(msg);
     } finally {
       setLoading(false);
@@ -173,39 +260,82 @@ export default function RecuperarSenha() {
 
   return (
     <div className="min-vh-100 d-flex align-items-center justify-content-center bg-light px-3 py-5">
-      <div className="card border-0 shadow-sm rounded-4 p-4 p-sm-5" style={{ maxWidth: '440px', width: '100%' }}>
-        
+      <div
+        className="card border-0 shadow-sm rounded-4 p-4 p-sm-5"
+        style={{ maxWidth: '440px', width: '100%' }}
+      >
         {/* CABEÇALHO */}
         <div className="text-center mb-4">
-          <h2 className="fw-bold text-dark fs-4 mb-1">Benchmark Web</h2>
+          <h2 className="fw-bold text-dark fs-4 mb-1">
+            Benchmark Web
+          </h2>
+
           <h3 className="fs-6 fw-bold text-secondary mb-1">
             {step === 1 && 'Recuperar Senha'}
             {step === 2 && 'Verifique seu e-mail'}
             {step === 3 && 'Criar Nova Senha'}
           </h3>
+
           <p className="text-muted small mb-0">
-            {step === 1 && 'Insira seu e-mail corporativo para receber o código de verificação'}
-            {step === 2 && `Enviamos um código de 6 dígitos para ${email || 'seu e-mail'}`}
-            {step === 3 && 'Defina uma nova senha de acesso para a sua conta'}
+            {step === 1 &&
+              'Insira seu e-mail corporativo para receber o código de verificação'}
+
+            {step === 2 &&
+              `Enviamos um código de 6 dígitos para ${
+                email || 'seu e-mail'
+              }`}
+
+            {step === 3 &&
+              'Defina uma nova senha de acesso para a sua conta'}
           </p>
         </div>
 
         {/* PROGRESSO DAS ETAPAS */}
         <div className="d-flex justify-content-center gap-2 mb-4">
-          <span className={`rounded-pill flex-grow-1 ${step >= 1 ? 'bg-primary' : 'bg-secondary-subtle'}`} style={{ height: '4px' }}></span>
-          <span className={`rounded-pill flex-grow-1 ${step >= 2 ? 'bg-primary' : 'bg-secondary-subtle'}`} style={{ height: '4px' }}></span>
-          <span className={`rounded-pill flex-grow-1 ${step >= 3 ? 'bg-primary' : 'bg-secondary-subtle'}`} style={{ height: '4px' }}></span>
+          <span
+            className={`rounded-pill flex-grow-1 ${
+              step >= 1
+                ? 'bg-primary'
+                : 'bg-secondary-subtle'
+            }`}
+            style={{ height: '4px' }}
+          />
+
+          <span
+            className={`rounded-pill flex-grow-1 ${
+              step >= 2
+                ? 'bg-primary'
+                : 'bg-secondary-subtle'
+            }`}
+            style={{ height: '4px' }}
+          />
+
+          <span
+            className={`rounded-pill flex-grow-1 ${
+              step >= 3
+                ? 'bg-primary'
+                : 'bg-secondary-subtle'
+            }`}
+            style={{ height: '4px' }}
+          />
         </div>
 
-        {/* ERROS E SUCESSOS */}
+        {/* ERROS */}
         {error && (
-          <div className="alert alert-danger py-2 px-3 small mb-3 rounded-3" role="alert">
+          <div
+            className="alert alert-danger py-2 px-3 small mb-3 rounded-3"
+            role="alert"
+          >
             ⚠ {error}
           </div>
         )}
 
+        {/* SUCESSOS */}
         {success && (
-          <div className="alert alert-success py-2 px-3 small mb-3 rounded-3" role="alert">
+          <div
+            className="alert alert-success py-2 px-3 small mb-3 rounded-3"
+            role="alert"
+          >
             ✓ {success}
           </div>
         )}
@@ -214,7 +344,10 @@ export default function RecuperarSenha() {
         {step === 1 && (
           <form onSubmit={handleSendEmail}>
             <div className="mb-3">
-              <label className="form-label fw-semibold small text-dark">Email Corporativo</label>
+              <label className="form-label fw-semibold small text-dark">
+                Email Corporativo
+              </label>
+
               <input
                 type="email"
                 className="form-control"
@@ -236,7 +369,11 @@ export default function RecuperarSenha() {
             >
               {loading ? (
                 <>
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  <span
+                    className="spinner-border spinner-border-sm me-2"
+                    role="status"
+                    aria-hidden="true"
+                  />
                   Enviando...
                 </>
               ) : (
@@ -250,13 +387,17 @@ export default function RecuperarSenha() {
         {step === 2 && (
           <form onSubmit={handleVerifyCode}>
             <div className="mb-3">
-              <label className="form-label fw-semibold small text-dark mb-2">Código de Verificação</label>
+              <label className="form-label fw-semibold small text-dark mb-2">
+                Código de Verificação
+              </label>
+
               <div className="d-flex justify-content-between gap-2">
                 {code.map((digit, idx) => (
                   <input
                     key={idx}
                     ref={codeRefs[idx]}
                     type="text"
+                    inputMode="numeric"
                     maxLength={1}
                     className="form-control text-center fw-bold fs-5 p-0"
                     style={{ height: '48px' }}
@@ -265,7 +406,9 @@ export default function RecuperarSenha() {
                       if (error) setError(null);
                       handleCodeChange(idx, e.target.value);
                     }}
-                    onKeyDown={(e) => handleKeyDown(idx, e)}
+                    onKeyDown={(e) =>
+                      handleKeyDown(idx, e)
+                    }
                     disabled={loading}
                   />
                 ))}
@@ -279,7 +422,11 @@ export default function RecuperarSenha() {
             >
               {loading ? (
                 <>
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  <span
+                    className="spinner-border spinner-border-sm me-2"
+                    role="status"
+                    aria-hidden="true"
+                  />
                   Verificando...
                 </>
               ) : (
@@ -305,38 +452,59 @@ export default function RecuperarSenha() {
           <form onSubmit={handleResetPassword}>
             {/* NOVA SENHA */}
             <div className="mb-3">
-              <label className="form-label fw-semibold small text-dark">Nova Senha</label>
+              <label className="form-label fw-semibold small text-dark">
+                Nova Senha
+              </label>
+
               <div className="input-group">
                 <input
-                  type={showNovaSenha ? 'text' : 'password'}
+                  type={
+                    showNovaSenha ? 'text' : 'password'
+                  }
                   className="form-control"
-                  placeholder="Mínimo 6 caracteres"
+                  placeholder="Mínimo 8 caracteres"
                   value={novaSenha}
                   onChange={(e) => {
                     if (error) setError(null);
                     setNovaSenha(e.target.value);
                   }}
-                  minLength={6}
+                  minLength={8}
                   disabled={loading}
                   required
                 />
+
                 <button
                   type="button"
                   className="btn btn-outline-secondary"
-                  onClick={() => setShowNovaSenha(!showNovaSenha)}
+                  onClick={() =>
+                    setShowNovaSenha(!showNovaSenha)
+                  }
                   disabled={loading}
                 >
-                  <i className={`bi ${showNovaSenha ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                  <i
+                    className={`bi ${
+                      showNovaSenha
+                        ? 'bi-eye-slash'
+                        : 'bi-eye'
+                    }`}
+                  />
                 </button>
               </div>
             </div>
 
             {/* CONFIRMAR NOVA SENHA */}
             <div className="mb-3">
-              <label className="form-label fw-semibold small text-dark">Confirmar Nova Senha</label>
+              <label className="form-label fw-semibold small text-dark">
+                Confirmar Nova Senha
+              </label>
+
               <div className="input-group">
                 <input
-                  type={showConfirmarSenha ? 'text' : 'password'}
+                  type={
+                    showConfirmarSenha
+                      ? 'text'
+                      : 'password'
+                  }
                   className="form-control"
                   placeholder="Repita sua nova senha"
                   value={confirmarSenha}
@@ -344,17 +512,28 @@ export default function RecuperarSenha() {
                     if (error) setError(null);
                     setConfirmarSenha(e.target.value);
                   }}
-                  minLength={6}
+                  minLength={8}
                   disabled={loading}
                   required
                 />
+
                 <button
                   type="button"
                   className="btn btn-outline-secondary"
-                  onClick={() => setShowConfirmarSenha(!showConfirmarSenha)}
+                  onClick={() =>
+                    setShowConfirmarSenha(
+                      !showConfirmarSenha
+                    )
+                  }
                   disabled={loading}
                 >
-                  <i className={`bi ${showConfirmarSenha ? 'bi-eye-slash' : 'bi-eye'}`}></i>
+                  <i
+                    className={`bi ${
+                      showConfirmarSenha
+                        ? 'bi-eye-slash'
+                        : 'bi-eye'
+                    }`}
+                  />
                 </button>
               </div>
             </div>
@@ -366,7 +545,11 @@ export default function RecuperarSenha() {
             >
               {loading ? (
                 <>
-                  <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                  <span
+                    className="spinner-border spinner-border-sm me-2"
+                    role="status"
+                    aria-hidden="true"
+                  />
                   Redefinindo...
                 </>
               ) : (
@@ -383,7 +566,10 @@ export default function RecuperarSenha() {
 
         <p className="text-center small text-muted mb-0">
           Lembrou a senha?{' '}
-          <Link href="/" className="text-decoration-none fw-semibold text-primary">
+          <Link
+            href="/"
+            className="text-decoration-none fw-semibold text-primary"
+          >
             Voltar para o login
           </Link>
         </p>
