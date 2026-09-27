@@ -18,11 +18,12 @@ export default function Login() {
     setError('');
 
     try {
-      const response = await fetch(`/api/auth/login`, {
+      const response = await fetch('https://api-ic-mutt.onrender.com/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Permite receber e enviar cookies HttpOnly
         body: JSON.stringify({
           emailInstitucional: email,
           senha: senha,
@@ -31,25 +32,9 @@ export default function Login() {
 
       const data = await response.json();
 
-      console.log("dados recebidos")
-
       if (!response.ok) {
         throw new Error(data.message || 'Erro ao realizar login.');
       }
-
-      if (data.token) {
-        localStorage.setItem('token', data.token);
-      }
-
-      console.log("token recebido")
-
-      if (data.user) {
-        localStorage.setItem('user', JSON.stringify(data.user));
-      }
-
-      console.log("dados do usuario recebido")
-
-      console.log('Login realizado. Redirecionando para /filtros');
 
       router.push('/filtros');
     } catch (err) {

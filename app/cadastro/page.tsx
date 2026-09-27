@@ -2,8 +2,11 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 
 export default function Cadastro() {
+  const router = useRouter();
+
   const [formData, setFormData] = useState({
     nomeCompleto: '',
     emailInstitucional: '',
@@ -48,6 +51,7 @@ export default function Cadastro() {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Mantém consistência para recebimento de cookies se aplicável
         body: JSON.stringify({
           nomeCompleto: formData.nomeCompleto,
           emailInstitucional: formData.emailInstitucional,
@@ -66,8 +70,8 @@ export default function Cadastro() {
       setMensagem('Cadastro realizado com sucesso! Verifique seu email. Redirecionando...');
 
       setTimeout(() => {
-        window.location.href = '/';
-      }, 4000);
+        router.push('/');
+      }, 3000);
 
       setFormData({
         nomeCompleto: '',
