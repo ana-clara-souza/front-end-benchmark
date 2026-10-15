@@ -1,16 +1,4 @@
-// lib/dashboardData/AnalyticsPayloadContext.tsx
-//
-// Mecanismo de handoff entre a página de filtro (fora de escopo desta
-// integração — ver prompt) e o dashboard. Este Context NÃO faz fetch, não
-// abre WebSocket, não sabe nada sobre Node/Mongo — só guarda o payload que
-// a página de filtro entrega via `deliverPayload(...)` depois de concluir
-// a própria chamada REST dela, e deixa o dashboard reagir a isso.
-//
-// Formato de `AnalyticsMessage` = exatamente o body que o Node devolve
-// (`{ charts, data, mobile_data? }`), o mesmo aceito por
-// `validateMessage`/`reduceIncomingMessage` em
-// lib/analytics-engine/lib/ingest/{schema,store}.js. Nenhuma transformação
-// acontece aqui — é passado adiante como está.
+//Teste de sincronização com o Render. 
 
 "use client";
 
