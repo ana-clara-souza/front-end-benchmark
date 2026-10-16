@@ -1,7 +1,7 @@
 // components/ChartDownloadMenu.jsx
 import React, { useState, useRef, useEffect } from "react";
 import { downloadCSV, downloadJSON, downloadXLSX } from "../lib/export/dataExport.js";
-import { exportPNG, exportPDF } from "../lib/export/imageExport.js";
+import { exportPNG, exportPDF, mountExportFigure } from "../lib/export/imageExport.js";
 
 /**
  * @param {object} props
@@ -9,9 +9,11 @@ import { exportPNG, exportPDF } from "../lib/export/imageExport.js";
  * @param {object} props.Plotly - módulo plotly.js-dist-min já importado (passado por quem monta o <Plot>, pra não duplicar o bundle)
  * @param {object|Array} props.statsData - dados usados para export CSV/JSON/XLSX (pode ser array plano ou agrupado por dataset)
  * @param {string} props.filename - nome base do arquivo (sem extensão)
+ * @param {{data: object[], layout: object}} [props.figure] - figura atual; com `rebuild`, o PNG/PDF é gerado numa figura refeita na largura do export (sem sobreposição de texto)
+ * @param {(widthPx:number)=>{data:object[],layout:object}} [props.rebuild]
  * @param {boolean} [props.imageExportEnabled=true] - desliga PNG/PDF quando plotRef ainda não montou (ex: dentro da miniatura)
  */
-export default function ChartDownloadMenu({ plotRef, Plotly, statsData, filename, imageExportEnabled = true }) {
+export default function ChartDownloadMenu({ plotRef, Plotly, statsData, filename, imageExportEnabled = true, figure = null, rebuild = null }) {
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(null); // qual export está em andamento, pra desabilitar o botão
   const menuRef = useRef(null);
@@ -28,12 +30,18 @@ export default function ChartDownloadMenu({ plotRef, Plotly, statsData, filename
     setBusy(kind);
     try {
       const gd = plotRef?.current;
-      if (kind === "png") {
+      if (kind === "png" || kind === "pdf") {
         if (!gd) throw new Error("Gráfico ainda não está pronto para exportar imagem.");
-        await exportPNG(gd, Plotly, filename);
-      } else if (kind === "pdf") {
-        if (!gd) throw new Error("Gráfico ainda não está pronto para exportar imagem.");
-        await exportPDF(gd, Plotly, filename);
+        // Com rebuild: figura refeita em 1600px, fora da tela, com a altura do próprio builder.
+        const mounted = rebuild && figure ? await mountExportFigure(Plotly, figure, rebuild, 1600) : null;
+        try {
+          const opts = mounted ? { width: mounted.width, height: mounted.height } : {};
+          const target = mounted ? mounted.gd : gd;
+          if (kind === "png") await exportPNG(target, Plotly, filename, opts);
+          else await exportPDF(target, Plotly, filename, opts);
+        } finally {
+          mounted?.dispose();
+        }
       } else if (kind === "csv") {
         downloadCSV(statsData, filename);
       } else if (kind === "json") {

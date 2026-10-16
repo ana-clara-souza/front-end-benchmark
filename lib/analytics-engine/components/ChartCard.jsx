@@ -12,7 +12,8 @@ const THUMB_FONT = 9;
  * original (modal/download) não é tocado.
  */
 function toThumbnail(data, layout) {
-  const l = { ...layout, title: undefined, showlegend: false, font: { size: THUMB_FONT }, margin: { t: 34, r: 8, b: 40, l: 8 } };
+  // width/height em px são da versão grande (modal/export); na miniatura o Plotly deve preencher o card
+  const l = { ...layout, width: undefined, height: undefined, autosize: true, title: undefined, showlegend: false, font: { size: THUMB_FONT }, margin: { t: 34, r: 8, b: 40, l: 8 } };
   for (const k of Object.keys(l)) {
     if (/^[xy]axis\d*$/.test(k)) {
       const ax = l[k];
@@ -24,7 +25,7 @@ function toThumbnail(data, layout) {
       };
     }
   }
-  l.annotations = (layout.annotations ?? []).map((a) => ({ ...a, font: { ...a.font, size: 10 } }));
+  l.annotations = (layout.annotations ?? []).map((a) => ({ ...a, yshift: 2, font: { ...a.font, size: 10 } }));
   const d = data.map((t) => ({
     ...t,
     ...(t.textfont ? { textfont: { ...t.textfont, size: 8 } } : {}),

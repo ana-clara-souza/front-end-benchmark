@@ -19,6 +19,7 @@ import ChartModal from "./ChartModal.jsx";
  *   layout: object|null,
  *   statsData: object|Array|null,
  *   filename: string,
+ *   rebuild?: (widthPx: number) => {data: object[], layout: object},
  * }>} props.slots
  */
 export default function AnalyticsDashboardGrid({ slots }) {
@@ -44,6 +45,7 @@ export default function AnalyticsDashboardGrid({ slots }) {
           title={maximizedSlot.title}
           data={maximizedSlot.data}
           layout={maximizedSlot.layout}
+          rebuild={maximizedSlot.rebuild}
           statsData={maximizedSlot.statsData}
           filename={maximizedSlot.filename}
           onClose={() => setMaximizedId(null)}

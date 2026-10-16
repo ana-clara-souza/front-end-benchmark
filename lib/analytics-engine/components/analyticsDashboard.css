@@ -94,7 +94,7 @@
 }
 .chart-modal__close:hover { color: #111827; }
 
-.chart-modal__body { flex: 1; min-height: 0; padding: 8px; }
+.chart-modal__body { flex: 1; min-height: 0; padding: 8px; overflow: auto; scrollbar-gutter: stable; }
 
 /* Menu de download */
 .chart-download-menu { position: relative; }
