@@ -31,17 +31,24 @@ export default function ExperimentosPage() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [newKey, setNewKey] = useState<string | null>(null);
 
-  // Busca lista de experimentos ativos e arquivados simultaneamente usando cookies HttpOnly
+  // Busca a lista de experimentos usando o token recebido no login.
   const fetchExperimentos = useCallback(async () => {
     setLoading(true);
     setError(null);
+
+    const token = localStorage.getItem('token');
+    if (!token) {
+      setLoading(false);
+      router.push('/');
+      return;
+    }
 
     const requestOptions: RequestInit = {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
       },
-      credentials: 'include', // Envia o cookie HttpOnly de sessão
     };
 
     try {
@@ -51,6 +58,8 @@ export default function ExperimentosPage() {
       ]);
 
       if (resAtivos.status === 401 || resArquivados.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         router.push('/');
         return;
       }
@@ -130,16 +139,24 @@ export default function ExperimentosPage() {
     setNewKey(null);
 
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/');
+        return;
+      }
+
       const response = await fetch('https://api-ic-mutt.onrender.com/api/experimentos/chaves', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
-        credentials: 'include', // Envia o cookie de autenticação
         body: JSON.stringify({ nome }),
       });
 
       if (response.status === 401) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
         router.push('/');
         return;
       }

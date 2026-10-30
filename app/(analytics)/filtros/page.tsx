@@ -62,18 +62,28 @@ export default function FiltrosPage() {
     chart_f1_heatmap: 'Heatmap F1 por Classe',
   };
 
-  // Carrega a lista real de experimentos da API usando cookies HttpOnly
+  // Carrega a lista real de experimentos usando o token recebido no login.
   const fetchMyExperiments = async () => {
     setLoadingExperiments(true);
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/');
+        return;
+      }
+
       const response = await fetch('http://localhost:3000/api/experimentos/info', {
         method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // Envia automaticamente o cookie HttpOnly
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
       });
 
       if (!response.ok) {
         if (response.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
           router.push('/');
           return;
         }
@@ -202,6 +212,12 @@ export default function FiltrosPage() {
     }
 
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        router.push('/');
+        return;
+      }
+
       // Montagem do Payload ÚNICO
       const payload: Record<string, unknown> = {
         charts: selectedCharts,
@@ -217,18 +233,21 @@ export default function FiltrosPage() {
 
       console.log('>>> [1] Payload enviado para /api/charts:', JSON.stringify(payload, null, 2));
 
-      // Requisição para o Backend com Cookie HttpOnly
+      // Requisição autenticada com o token recebido no login.
       const response = await fetch('https://api-ic-mutt.onrender.com/api/charts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
         },
-        credentials: 'include', // Envia o cookie de autenticação
         body: JSON.stringify(payload),
       });
 
       if (!response.ok) {
         if (response.status === 401) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          router.push('/');
           throw new Error('Sessão expirada ou não autorizada. Por favor, faça login novamente.');
         }
         throw new Error(`Erro HTTP ${response.status} ao carregar gráficos do servidor.`);

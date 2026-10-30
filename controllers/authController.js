@@ -40,7 +40,6 @@ exports.login = async ({ body }) => {
       body: {
         message: "Login realizado com sucesso.",
         token: authService.generateAccessToken(user._id),
-        sessionToken: authService.generateAccessToken(user._id),
         user: {
           id: user._id,
           nomeCompleto: user.nomeCompleto,

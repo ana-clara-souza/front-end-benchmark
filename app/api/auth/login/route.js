@@ -7,9 +7,6 @@ const {
 } = require("@/lib/loginRateLimit");
 export const runtime = "nodejs";
 
-const SESSION_COOKIE = "access_token";
-const SESSION_MAX_AGE_SECONDS = 24 * 60 * 60;
-
 function getClientIp(request) {
   const forwardedFor = request.headers.get("x-forwarded-for");
   return (
@@ -52,20 +49,5 @@ export async function POST(request) {
 
   if (result.status === 401) registerFailure(keys);
 
-  const { sessionToken, ...responseBody } = result.body;
-  const response = NextResponse.json(responseBody, { status: result.status });
-
-  if (result.status === 200 && sessionToken) {
-    response.cookies.set({
-      name: SESSION_COOKIE,
-      value: sessionToken,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
-      path: "/",
-      maxAge: SESSION_MAX_AGE_SECONDS,
-    });
-  }
-
-  return response;
+  return NextResponse.json(result.body, { status: result.status });
 }
